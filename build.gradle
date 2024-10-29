@@ -47,6 +47,10 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:5.+"
 	testImplementation "org.mockito:mockito-core:5.+"
 	testImplementation "com.google.truth:truth:1.+"
+
+	// https://mvnrepository.com/artifact/commons-net/commons-net
+	implementation 'commons-net:commons-net:3.11.1'
+
 }
 
 java {
