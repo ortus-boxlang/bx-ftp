@@ -2,6 +2,7 @@ package ortus.boxlang.ftp.components;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -120,6 +121,56 @@ public class FTPTest {
 		for ( String file : arr ) {
 			assertThat( file ).isIn( expectations );
 		}
+
+	}
+
+	@DisplayName( "It can create a folder" )
+	@Test
+	public void testCreateDirActive() {
+		// @formatter:off
+		instance.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="test_user" password="testpass" server="localhost"/>
+				<bx:ftp action="removeDir" item="new_folder" connection="conn" stopOnError=false />
+				<bx:ftp action="createDir" new="new_folder" connection="conn" stopOnError=true />
+				<bx:ftp action="listdir" connection="conn" name="result"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		assertThat( variables.get( result ) ).isInstanceOf( String[].class );
+
+		String[]		arr				= ( String[] ) variables.get( result );
+		List<String>	expectations	= List.of( "a sub folder", "file_a.txt", "something.txt", "new_folder" );
+
+		assertThat( Arrays.asList( arr ) ).contains( "new_folder" );
+
+	}
+
+	@DisplayName( "It can delete a folder" )
+	@Test
+	public void testDeleteDirActive() {
+		// @formatter:off
+		instance.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="test_user" password="testpass" server="localhost"/>
+				<bx:ftp action="removeDir" item="new_folder" connection="conn" stopOnError=false />
+				<bx:ftp action="createDir" new="new_folder" connection="conn" stopOnError=true />
+				<bx:ftp action="removeDir" item="new_folder" connection="conn" stopOnError=true />
+				<bx:ftp action="listdir" connection="conn" name="result"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		assertThat( variables.get( result ) ).isInstanceOf( String[].class );
+
+		String[] arr = ( String[] ) variables.get( result );
+
+		assertThat( Arrays.asList( arr ) ).doesNotContain( "new_folder" );
 
 	}
 

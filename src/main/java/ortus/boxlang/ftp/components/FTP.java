@@ -20,20 +20,29 @@ import ortus.boxlang.runtime.validation.Validator;
 @BoxComponent( allowsBody = false )
 public class FTP extends Component {
 
-	public final static Key	connection	= Key.of( "connection" );
-	public final static Key	stopOnError	= Key.of( "stopOnError" );
-	public final static Key	passive		= Key.of( "passive" );
+	public final static Key			connection	= Key.of( "connection" );
+	public final static Key			stopOnError	= Key.of( "stopOnError" );
+	public final static Key			passive		= Key.of( "passive" );
+	public final static Key			_new		= Key.of( "new" );
+	public final static String[]	actions		= new String[] {
+	    "open",
+	    "listdir",
+	    "createDir",
+	    "removeDir"
+	};
 
 	public FTP() {
 		super();
 		declaredAttributes = new Attribute[] {
-		    new Attribute( Key.action, "string", Set.of( Validator.REQUIRED, Validator.valueOneOf( "open", "listdir" ) ) ),
+		    new Attribute( Key.action, "string", Set.of( Validator.REQUIRED, Validator.valueOneOf( actions ) ) ),
 		    new Attribute( Key._name, "string" ),
 		    new Attribute( Key.username, "string" ),
 		    new Attribute( Key.password, "string" ),
 		    new Attribute( Key.port, "numeric", 21 ),
 		    new Attribute( Key.server, "string" ),
-		    new Attribute( stopOnError, "boolean", false ),
+		    new Attribute( Key.item, "string" ),
+		    new Attribute( _new, "string" ),
+		    new Attribute( stopOnError, "boolean" ),
 		    new Attribute( passive, "boolean", false ),
 		    new Attribute( connection, "string" )
 		};
@@ -55,11 +64,16 @@ public class FTP extends Component {
 	 *
 	 */
 	public BodyResult _invoke( IBoxContext context, IStruct attributes, ComponentBody body, IStruct executionState ) {
-		FTPConnection	ftpConnection	= findConnection( context, attributes );
-		String			action			= StringCaster.cast( attributes.get( Key.action ) ).toLowerCase();
+		FTPConnection	ftpConnection		= findConnection( context, attributes );
+		String			action				= StringCaster.cast( attributes.get( Key.action ) ).toLowerCase();
+		Boolean			stopOnErrorValue	= attributes.containsKey( stopOnError ) ? BooleanCaster.cast( attributes.get( stopOnError ) ) : null;
+
+		if ( stopOnErrorValue != null ) {
+			ftpConnection.setStopOnError( stopOnErrorValue );
+		}
 
 		try {
-			switch ( action ) {
+			switch ( action.toLowerCase() ) {
 				case "open" :
 
 					ftpConnection.open(
@@ -74,6 +88,14 @@ public class FTP extends Component {
 						context.getDefaultAssignmentScope().put( Key.of( s ), ftpConnection );
 					}
 
+					break;
+
+				case "createdir" :
+					ftpConnection.createDir( StringCaster.cast( attributes.get( _new ) ) );
+					break;
+
+				case "removedir" :
+					ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
 					break;
 
 				case "listdir" :
