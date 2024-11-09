@@ -9,6 +9,8 @@ import ortus.boxlang.runtime.components.BoxComponent;
 import ortus.boxlang.runtime.components.Component;
 import ortus.boxlang.runtime.context.IBoxContext;
 import ortus.boxlang.runtime.context.IBoxContext.ScopeSearchResult;
+import ortus.boxlang.runtime.dynamic.casters.BooleanCaster;
+import ortus.boxlang.runtime.dynamic.casters.IntegerCaster;
 import ortus.boxlang.runtime.dynamic.casters.StringCaster;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.IStruct;
@@ -18,8 +20,9 @@ import ortus.boxlang.runtime.validation.Validator;
 @BoxComponent( allowsBody = false )
 public class FTP extends Component {
 
-	static Key	connection	= Key.of( "connection" );
-	static Key	stopOnError	= Key.of( "stopOnError" );
+	public final static Key	connection	= Key.of( "connection" );
+	public final static Key	stopOnError	= Key.of( "stopOnError" );
+	public final static Key	passive		= Key.of( "passive" );
 
 	public FTP() {
 		super();
@@ -28,8 +31,10 @@ public class FTP extends Component {
 		    new Attribute( Key._name, "string" ),
 		    new Attribute( Key.username, "string" ),
 		    new Attribute( Key.password, "string" ),
+		    new Attribute( Key.port, "numeric", 21 ),
 		    new Attribute( Key.server, "string" ),
 		    new Attribute( stopOnError, "boolean", false ),
+		    new Attribute( passive, "boolean", false ),
 		    new Attribute( connection, "string" )
 		};
 	}
@@ -59,9 +64,10 @@ public class FTP extends Component {
 
 					ftpConnection.open(
 					    StringCaster.cast( attributes.get( Key.server ) ),
-					    2221,
+					    IntegerCaster.cast( attributes.get( Key.port ) ),
 					    StringCaster.cast( attributes.get( Key.username ) ),
-					    StringCaster.cast( attributes.get( Key.password ) )
+					    StringCaster.cast( attributes.get( Key.password ) ),
+					    BooleanCaster.cast( attributes.get( passive ) )
 					);
 
 					if ( attributes.containsKey( connection ) && attributes.get( connection ) instanceof String s ) {

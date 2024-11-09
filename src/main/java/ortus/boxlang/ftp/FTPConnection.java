@@ -15,11 +15,7 @@ public class FTPConnection {
 	private FTPClient		client	= new FTPClient();
 	private FTPClientConfig	config	= new FTPClientConfig();
 
-	public void open( String server, String username, String password ) throws IOException {
-		open( server, 22, username, password );
-	}
-
-	public void open( String server, Integer port, String username, String password ) throws IOException {
+	public void open( String server, Integer port, String username, String password, boolean passive ) throws IOException {
 		client.connect( server, port );
 		client.login( username, password );
 
@@ -28,7 +24,9 @@ public class FTPConnection {
 			throw new BoxRuntimeException( "FTP server refused connection: " + client.getReplyString() );
 		}
 
-		client.enterLocalPassiveMode();
+		if ( passive ) {
+			client.enterLocalPassiveMode();
+		}
 	}
 
 	public void close() throws IOException {
