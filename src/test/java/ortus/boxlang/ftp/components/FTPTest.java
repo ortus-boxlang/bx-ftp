@@ -18,6 +18,8 @@ import ortus.boxlang.runtime.context.ScriptingRequestBoxContext;
 import ortus.boxlang.runtime.scopes.IScope;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.scopes.VariablesScope;
+import ortus.boxlang.runtime.types.IStruct;
+import ortus.boxlang.runtime.types.Query;
 
 public class FTPTest {
 
@@ -88,13 +90,13 @@ public class FTPTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( result ) ).isInstanceOf( String[].class );
+		assertThat( variables.get( result ) ).isInstanceOf( Query.class );
 
-		String[]		arr				= ( String[] ) variables.get( result );
+		Query			arr				= ( Query ) variables.get( result );
 		List<String>	expectations	= List.of( "a sub folder", "file_a.txt", "something.txt" );
 
-		for ( String file : arr ) {
-			assertThat( file ).isIn( expectations );
+		for ( IStruct file : arr ) {
+			assertThat( file.get( Key._name ) ).isIn( expectations );
 		}
 
 	}
@@ -113,13 +115,14 @@ public class FTPTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( result ) ).isInstanceOf( String[].class );
+		assertThat( variables.get( result ) ).isInstanceOf( Query.class );
 
-		String[]		arr				= ( String[] ) variables.get( result );
+		Query			arr				= ( Query ) variables.get( result );
+
 		List<String>	expectations	= List.of( "a sub folder", "file_a.txt", "something.txt" );
 
-		for ( String file : arr ) {
-			assertThat( file ).isIn( expectations );
+		for ( IStruct file : arr ) {
+			assertThat( file.get( Key._name ) ).isIn( expectations );
 		}
 
 	}
@@ -134,18 +137,16 @@ public class FTPTest {
 				<bx:ftp action="removeDir" item="new_folder" connection="conn" stopOnError=false />
 				<bx:ftp action="createDir" new="new_folder" connection="conn" stopOnError=true />
 				<bx:ftp action="listdir" connection="conn" name="result"/>
+				<bx:ftp action="removeDir" item="new_folder" connection="conn" stopOnError=false />
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
 		);
 		// @formatter:on
 
-		assertThat( variables.get( result ) ).isInstanceOf( String[].class );
+		Query arr = ( Query ) variables.get( result );
 
-		String[]		arr				= ( String[] ) variables.get( result );
-		List<String>	expectations	= List.of( "a sub folder", "file_a.txt", "something.txt", "new_folder" );
-
-		assertThat( Arrays.asList( arr ) ).contains( "new_folder" );
+		assertThat( Arrays.asList( arr.getColumnData( Key._name ) ) ).contains( "new_folder" );
 
 	}
 
@@ -166,11 +167,9 @@ public class FTPTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( result ) ).isInstanceOf( String[].class );
+		Query arr = ( Query ) variables.get( result );
 
-		String[] arr = ( String[] ) variables.get( result );
-
-		assertThat( Arrays.asList( arr ) ).doesNotContain( "new_folder" );
+		assertThat( Arrays.asList( arr.getColumnData( Key._name ) ) ).doesNotContain( "new_folder" );
 
 	}
 

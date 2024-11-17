@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import ortus.boxlang.ftp.FTPConnection;
+import ortus.boxlang.ftp.FTPKeys;
 import ortus.boxlang.runtime.components.Attribute;
 import ortus.boxlang.runtime.components.BoxComponent;
 import ortus.boxlang.runtime.components.Component;
@@ -14,17 +15,14 @@ import ortus.boxlang.runtime.dynamic.casters.IntegerCaster;
 import ortus.boxlang.runtime.dynamic.casters.StringCaster;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.IStruct;
+import ortus.boxlang.runtime.types.Query;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
 import ortus.boxlang.runtime.validation.Validator;
 
 @BoxComponent( allowsBody = false )
 public class FTP extends Component {
 
-	public final static Key			connection	= Key.of( "connection" );
-	public final static Key			stopOnError	= Key.of( "stopOnError" );
-	public final static Key			passive		= Key.of( "passive" );
-	public final static Key			_new		= Key.of( "new" );
-	public final static String[]	actions		= new String[] {
+	public final static String[] actions = new String[] {
 	    "open",
 	    "listdir",
 	    "createDir",
@@ -41,10 +39,10 @@ public class FTP extends Component {
 		    new Attribute( Key.port, "numeric", 21 ),
 		    new Attribute( Key.server, "string" ),
 		    new Attribute( Key.item, "string" ),
-		    new Attribute( _new, "string" ),
-		    new Attribute( stopOnError, "boolean" ),
-		    new Attribute( passive, "boolean", false ),
-		    new Attribute( connection, "string" )
+		    new Attribute( FTPKeys._new, "string" ),
+		    new Attribute( FTPKeys.stopOnError, "boolean" ),
+		    new Attribute( FTPKeys.passive, "boolean", false ),
+		    new Attribute( FTPKeys.connection, "string" )
 		};
 	}
 
@@ -66,7 +64,8 @@ public class FTP extends Component {
 	public BodyResult _invoke( IBoxContext context, IStruct attributes, ComponentBody body, IStruct executionState ) {
 		FTPConnection	ftpConnection		= findConnection( context, attributes );
 		String			action				= StringCaster.cast( attributes.get( Key.action ) ).toLowerCase();
-		Boolean			stopOnErrorValue	= attributes.containsKey( stopOnError ) ? BooleanCaster.cast( attributes.get( stopOnError ) ) : null;
+		Boolean			stopOnErrorValue	= attributes.containsKey( FTPKeys.stopOnError ) ? BooleanCaster.cast( attributes.get( FTPKeys.stopOnError ) )
+		    : null;
 
 		if ( stopOnErrorValue != null ) {
 			ftpConnection.setStopOnError( stopOnErrorValue );
@@ -81,17 +80,17 @@ public class FTP extends Component {
 					    IntegerCaster.cast( attributes.get( Key.port ) ),
 					    StringCaster.cast( attributes.get( Key.username ) ),
 					    StringCaster.cast( attributes.get( Key.password ) ),
-					    BooleanCaster.cast( attributes.get( passive ) )
+					    BooleanCaster.cast( attributes.get( FTPKeys.passive ) )
 					);
 
-					if ( attributes.containsKey( connection ) && attributes.get( connection ) instanceof String s ) {
+					if ( attributes.containsKey( FTPKeys.connection ) && attributes.get( FTPKeys.connection ) instanceof String s ) {
 						context.getDefaultAssignmentScope().put( Key.of( s ), ftpConnection );
 					}
 
 					break;
 
 				case "createdir" :
-					ftpConnection.createDir( StringCaster.cast( attributes.get( _new ) ) );
+					ftpConnection.createDir( StringCaster.cast( attributes.get( FTPKeys._new ) ) );
 					break;
 
 				case "removedir" :
@@ -99,7 +98,7 @@ public class FTP extends Component {
 					break;
 
 				case "listdir" :
-					String[] files = ftpConnection.listdir();
+					Query files = ftpConnection.listdir();
 
 					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
 					break;
@@ -114,11 +113,11 @@ public class FTP extends Component {
 	}
 
 	private FTPConnection findConnection( IBoxContext context, IStruct attributes ) {
-		if ( !attributes.containsKey( connection ) ) {
+		if ( !attributes.containsKey( FTPKeys.connection ) ) {
 			return new FTPConnection();
 		}
 
-		Object ftpConnection = attributes.get( connection );
+		Object ftpConnection = attributes.get( FTPKeys.connection );
 
 		if ( ftpConnection instanceof FTPConnection f ) {
 			return f;
