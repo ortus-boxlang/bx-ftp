@@ -53,7 +53,7 @@ jobs:
         run: |
           sudo apt install -y vsftpd
           sudo service vsftpd start
-          cp ./resources/vsftpd.conf /etc/vsftpd.conf
+          sudo cp ./resources/vsftpd.conf /etc/vsftpd.conf
           sudo service vsftpd restart
           sudo service --status-all
 
