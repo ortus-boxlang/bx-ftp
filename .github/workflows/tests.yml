@@ -55,8 +55,6 @@ jobs:
           sudo service vsftpd start
           sudo cp ./resources/vsftpd.conf /etc/vsftpd.conf
 
-          # mkdir -p ./home/test_user
-
           hdir="/home/test_user"
           encrypted=`echo testpass | openssl passwd -6 -stdin`
           sudo useradd -m --home-dir $hdir -p $encrypted test_user
@@ -68,15 +66,8 @@ jobs:
           sudo service vsftpd restart
           sudo service --status-all
 
-
-          sudo ls -l $hdir
-
-          echo "ls" | ftp -v ftp://test_user:testpass@localhost
-
           echo "Copying ./src/test/resources/.env.example"
           sudo cp ./src/test/resources/.env.example ./src/test/resources/.env
-
-          ls -a ./src/test/resources
 
       # - name: Setup Database and Fixtures
       #   run: |
