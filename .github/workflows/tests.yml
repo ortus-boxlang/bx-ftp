@@ -54,7 +54,7 @@ jobs:
           sudo apt install -y vsftpd
           sudo service vsftpd start
 
-          mkdir ./home/test_user
+          mkdir -p ./home/test_user
 
           encrypted=`echo testpass | openssl passwd -6 -stdin`
           sudo useradd -m --home-dir ./home/test_user -p $encrypted test_user
