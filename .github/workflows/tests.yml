@@ -64,7 +64,10 @@ jobs:
 
           sudo chown -hR test_user $hdir 
 
+          echo "Copying ./src/test/resources/.env.example"
           sudo cp ./src/test/resources/.env.example ./src/test/resources/.env
+
+          ls ./src/test/resources | echo
 
       # - name: Setup Database and Fixtures
       #   run: |
