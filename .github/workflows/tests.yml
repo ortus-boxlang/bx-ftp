@@ -54,8 +54,8 @@ jobs:
           sudo apt install -y vsftpd
           sudo service vsftpd start
 
-          sudo adduser test_user
-          echo "test_user:testpass" | chpasswd
+          encrypted=`echo testpass | openssl passwd -6 -stdin`
+          sudo useradd -p $encrypted test_user
 
           cp -rT ./resources/ftp_files /home/test_user
 
