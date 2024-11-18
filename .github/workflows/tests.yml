@@ -53,6 +53,9 @@ jobs:
         run: |
           sudo apt install -y vsftpd
           sudo service vsftpd start
+          cp ./resources/vsftpd.conf /etc/vsftpd.conf
+          sudo service vsftpd restart
+          sudo service --status-all
 
           mkdir -p ./home/test_user
 
