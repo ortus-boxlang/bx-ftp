@@ -56,12 +56,13 @@ jobs:
 
           mkdir -p ./home/test_user
 
+          hdir="$(pwd)/home/test_user"
           encrypted=`echo testpass | openssl passwd -6 -stdin`
-          sudo useradd -m --home-dir ./home/test_user -p $encrypted test_user
+          sudo useradd -m --home-dir $hdir -p $encrypted test_user
 
-          cp -rT ./resources/ftp_files /home/test_user
+          cp -rT ./resources/ftp_files $hdir
 
-          sudo chown -hR test_user /home/test_user 
+          sudo chown -hR test_user $hdir 
 
           sudo cp ./src/test/resources/.env.example ./src/test/resources/.env
 
