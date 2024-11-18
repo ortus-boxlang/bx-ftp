@@ -42,7 +42,8 @@ public class FTPTest {
 		variables	= context.getScopeNearby( VariablesScope.name );
 
 		try {
-			System.getProperties().load( new FileInputStream( "resources/.env" ) );
+			System.out.println( System.getProperty( "user.dir" ) );
+			System.getProperties().load( new FileInputStream( "./resources/.env" ) );
 		} catch ( FileNotFoundException e ) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
