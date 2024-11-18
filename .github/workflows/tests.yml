@@ -68,7 +68,7 @@ jobs:
           sudo service vsftpd restart
           sudo service --status-all
 
-          echo "ls" | ftp ftp://test_user:testpass@localhost
+          echo "ls" | ftp -v ftp://test_user:testpass@localhost
 
           echo "Copying ./src/test/resources/.env.example"
           sudo cp ./src/test/resources/.env.example ./src/test/resources/.env
