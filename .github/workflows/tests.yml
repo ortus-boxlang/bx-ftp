@@ -54,8 +54,6 @@ jobs:
           sudo apt install -y vsftpd
           sudo service vsftpd start
           sudo cp ./resources/vsftpd.conf /etc/vsftpd.conf
-          sudo service vsftpd restart
-          sudo service --status-all
 
           mkdir -p ./home/test_user
 
@@ -66,6 +64,11 @@ jobs:
           cp -rT ./resources/ftp_files $hdir
 
           sudo chown -hR test_user $hdir 
+
+          sudo service vsftpd restart
+          sudo service --status-all
+
+          echo "ls" | ftp ftp://test_user:testpass@localhost
 
           echo "Copying ./src/test/resources/.env.example"
           sudo cp ./src/test/resources/.env.example ./src/test/resources/.env
