@@ -67,7 +67,7 @@ jobs:
           echo "Copying ./src/test/resources/.env.example"
           sudo cp ./src/test/resources/.env.example ./src/test/resources/.env
 
-          ls ./src/test/resources | echo
+          ls ./src/test/resources
 
       # - name: Setup Database and Fixtures
       #   run: |
