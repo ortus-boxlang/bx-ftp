@@ -63,7 +63,7 @@ jobs:
 
           cp -rT ./resources/ftp_files $hdir
 
-          sudo chown -hR test_user $hdir 
+          sudo chown -hR test_user:root $hdir 
 
           sudo service vsftpd restart
           sudo service --status-all
