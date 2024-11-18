@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPClientConfig;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
@@ -17,9 +16,8 @@ import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
 
 public class FTPConnection {
 
-	private FTPClient		client		= new FTPClient();
-	private FTPClientConfig	config		= new FTPClientConfig();
-	private boolean			stopOnError	= false;
+	private FTPClient	client		= new FTPClient();
+	private boolean		stopOnError	= false;
 
 	public void open( String server, Integer port, String username, String password, boolean passive ) throws IOException {
 		client.connect( server, port );
@@ -33,6 +31,14 @@ public class FTPConnection {
 		if ( passive ) {
 			client.enterLocalPassiveMode();
 		}
+	}
+
+	public String getWorkingDirectory() throws IOException {
+		return client.printWorkingDirectory();
+	}
+
+	public void changeDir( String dirName ) throws IOException {
+		client.changeWorkingDirectory( dirName );
 	}
 
 	public void close() throws IOException {

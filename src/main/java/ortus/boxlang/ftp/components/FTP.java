@@ -26,7 +26,8 @@ public class FTP extends Component {
 	    "open",
 	    "listdir",
 	    "createDir",
-	    "removeDir"
+	    "removeDir",
+	    "changedir"
 	};
 
 	public FTP() {
@@ -42,7 +43,7 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys._new, "string" ),
 		    new Attribute( FTPKeys.stopOnError, "boolean" ),
 		    new Attribute( FTPKeys.passive, "boolean", false ),
-		    new Attribute( FTPKeys.connection, "string" )
+		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) )
 		};
 	}
 
@@ -62,7 +63,7 @@ public class FTP extends Component {
 	 *
 	 */
 	public BodyResult _invoke( IBoxContext context, IStruct attributes, ComponentBody body, IStruct executionState ) {
-		FTPConnection	ftpConnection		= findConnection( context, attributes );
+		FTPConnection	ftpConnection		= findOrInitializeConnection( context, attributes );
 		String			action				= StringCaster.cast( attributes.get( Key.action ) ).toLowerCase();
 		Boolean			stopOnErrorValue	= attributes.containsKey( FTPKeys.stopOnError ) ? BooleanCaster.cast( attributes.get( FTPKeys.stopOnError ) )
 		    : null;
@@ -89,6 +90,10 @@ public class FTP extends Component {
 
 					break;
 
+				case "changedir" :
+					ftpConnection.changeDir( StringCaster.cast( attributes.get( Key.directory ) ) );
+					break;
+
 				case "createdir" :
 					ftpConnection.createDir( StringCaster.cast( attributes.get( FTPKeys._new ) ) );
 					break;
@@ -112,29 +117,29 @@ public class FTP extends Component {
 		return DEFAULT_RETURN;
 	}
 
-	private FTPConnection findConnection( IBoxContext context, IStruct attributes ) {
-		if ( !attributes.containsKey( FTPKeys.connection ) ) {
-			return new FTPConnection();
-		}
-
+	private FTPConnection findOrInitializeConnection( IBoxContext context, IStruct attributes ) {
 		Object ftpConnection = attributes.get( FTPKeys.connection );
 
 		if ( ftpConnection instanceof FTPConnection f ) {
 			return f;
-		} else if ( ftpConnection instanceof String s ) {
-			ScopeSearchResult result = context.scopeFindNearby( Key.of( s ), context.getDefaultAssignmentScope() );
-
-			if ( result.value() instanceof FTPConnection f ) {
-				return f;
-			} else if ( result.value() == null ) {
-				return new FTPConnection();
-			}
-
-			throw new BoxRuntimeException( "connection is not a valid FTPConnection" );
-		} else if ( ftpConnection == null ) {
-			return new FTPConnection();
 		}
 
-		throw new BoxRuntimeException( "connection is not a valid FTPConnection" );
+		if ( ! ( ftpConnection instanceof String ) ) {
+			throw new BoxRuntimeException( "connection is not a valid FTPConnection" );
+		}
+
+		String				connectionName	= StringCaster.cast( ftpConnection );
+
+		ScopeSearchResult	result			= context.scopeFindNearby( Key.of( connectionName ), context.getDefaultAssignmentScope() );
+
+		if ( result.value() instanceof FTPConnection f ) {
+			return f;
+		}
+
+		FTPConnection conn = new FTPConnection();
+
+		context.getDefaultAssignmentScope().assign( context, Key.of( connectionName ), conn );
+
+		return conn;
 	}
 }
