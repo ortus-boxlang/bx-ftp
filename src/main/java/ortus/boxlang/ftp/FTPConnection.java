@@ -1,6 +1,7 @@
 package ortus.boxlang.ftp;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -20,17 +21,42 @@ public class FTPConnection {
 	private boolean		stopOnError	= false;
 
 	public void open( String server, Integer port, String username, String password, boolean passive ) throws IOException {
+		// Connect to the server
 		client.connect( server, port );
-		client.login( username, password );
+		Duration timeout = Duration.ofSeconds( 0 );
+		client.setDataTimeout( timeout );
 
+		// Login with username and password
+		if ( !client.login( username, password ) ) {
+			client.disconnect();
+			throw new BoxRuntimeException( "FTP server refused connection: " + client.getReplyString() );
+		}
+
+		// Check for a positive response
 		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) ) {
 			client.disconnect();
 			throw new BoxRuntimeException( "FTP server refused connection: " + client.getReplyString() );
 		}
 
+		int mode = client.getDataConnectionMode();
+
 		if ( passive ) {
-			client.enterLocalPassiveMode();
+			if ( FTPClient.PASSIVE_LOCAL_DATA_CONNECTION_MODE != mode ) {
+				client.enterLocalPassiveMode();
+			}
+		} else {
+			if ( FTPClient.ACTIVE_LOCAL_DATA_CONNECTION_MODE != mode ) {
+				client.enterLocalActiveMode();
+			}
 		}
+	}
+
+	public int getStatusCode() {
+		return client.getReplyCode();
+	}
+
+	public String getStatusText() {
+		return client.getReplyString();
 	}
 
 	public String getWorkingDirectory() throws IOException {
@@ -60,6 +86,47 @@ public class FTPConnection {
 		}
 	}
 
+	public Boolean existsFile( String path ) {
+
+		if ( path.equals( "/" ) ) {
+			return true;
+		}
+
+		FTPFile[] files = null;
+		try {
+			final String currentPath = client.printWorkingDirectory().trim();
+			files = client.listFiles( currentPath );
+
+			if ( files != null ) {
+				Boolean result = Arrays.asList( files ).stream()
+				    .anyMatch( file -> file.getName().equalsIgnoreCase( path ) );
+				return result;
+			}
+		} catch ( IOException e ) {
+			this.handleError();
+			return false;
+		}
+
+		return false;
+	}
+
+	public Boolean existsDir( String dirName ) throws IOException {
+		String	pwd		= null;
+		Boolean	result	= null;
+		try {
+			pwd		= client.printWorkingDirectory();
+			result	= client.changeWorkingDirectory( dirName );
+			this.handleError();
+			return result;
+		} catch ( IOException e ) {
+			this.handleError();
+			return false;
+		} finally {
+			if ( pwd != null )
+				client.changeWorkingDirectory( pwd );
+		}
+	}
+
 	public void removeDir( String dirName ) {
 		try {
 			client.removeDirectory( dirName );
@@ -85,7 +152,7 @@ public class FTPConnection {
 
 		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) ) {
 			client.disconnect();
-			throw new BoxRuntimeException( "FTP error: " + client.getReplyString() );
+			throw new BoxRuntimeException( "FTP error: " + client.getReplyCode() );
 		}
 
 		Query result = new Query();

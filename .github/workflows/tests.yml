@@ -26,6 +26,7 @@ jobs:
         # os: [ "ubuntu-latest", "windows-latest" ]
         jdkVersion: [ "21" ]
         experimental: [false]
+        ftpMode: [ "active", "passive" ]
         #include:
           #- jdkVersion: "17"
           #  os: "windows-latest"

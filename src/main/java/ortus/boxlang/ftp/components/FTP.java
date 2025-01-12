@@ -5,6 +5,7 @@ import java.util.Set;
 
 import ortus.boxlang.ftp.FTPConnection;
 import ortus.boxlang.ftp.FTPKeys;
+import ortus.boxlang.ftp.FTPResult;
 import ortus.boxlang.runtime.components.Attribute;
 import ortus.boxlang.runtime.components.BoxComponent;
 import ortus.boxlang.runtime.components.Component;
@@ -27,7 +28,11 @@ public class FTP extends Component {
 	    "listdir",
 	    "createDir",
 	    "removeDir",
-	    "changedir"
+	    "changedir",
+	    "getCurrentDir",
+	    "close",
+	    "existsFile",
+	    "existsDir"
 	};
 
 	public FTP() {
@@ -64,18 +69,19 @@ public class FTP extends Component {
 	 */
 	public BodyResult _invoke( IBoxContext context, IStruct attributes, ComponentBody body, IStruct executionState ) {
 		FTPConnection	ftpConnection		= findOrInitializeConnection( context, attributes );
+		FTPResult		ftpResult			= new FTPResult( ftpConnection );
 		String			action				= StringCaster.cast( attributes.get( Key.action ) ).toLowerCase();
 		Boolean			stopOnErrorValue	= attributes.containsKey( FTPKeys.stopOnError ) ? BooleanCaster.cast( attributes.get( FTPKeys.stopOnError ) )
-		    : null;
+		    : false;
+		Object			returnValue			= null;
 
-		if ( stopOnErrorValue != null ) {
+		if ( stopOnErrorValue != false ) {
 			ftpConnection.setStopOnError( stopOnErrorValue );
 		}
 
 		try {
 			switch ( action.toLowerCase() ) {
 				case "open" :
-
 					ftpConnection.open(
 					    StringCaster.cast( attributes.get( Key.server ) ),
 					    IntegerCaster.cast( attributes.get( Key.port ) ),
@@ -83,32 +89,57 @@ public class FTP extends Component {
 					    StringCaster.cast( attributes.get( Key.password ) ),
 					    BooleanCaster.cast( attributes.get( FTPKeys.passive ) )
 					);
-
-					if ( attributes.containsKey( FTPKeys.connection ) && attributes.get( FTPKeys.connection ) instanceof String s ) {
-						context.getDefaultAssignmentScope().put( Key.of( s ), ftpConnection );
-					}
-
 					break;
-
+				case "close" :
+					ftpConnection.close();
+					break;
 				case "changedir" :
 					ftpConnection.changeDir( StringCaster.cast( attributes.get( Key.directory ) ) );
 					break;
-
 				case "createdir" :
 					ftpConnection.createDir( StringCaster.cast( attributes.get( FTPKeys._new ) ) );
 					break;
-
 				case "removedir" :
 					ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
 					break;
-
 				case "listdir" :
-					Query files = ftpConnection.listdir();
+					try {
+						Query files = ftpConnection.listdir();
+						context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
+					} catch ( IOException e ) {
 
-					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
+						e.printStackTrace();
+					}
+					break;
+				case "getcurrentdir" :
+					returnValue = ftpConnection.getWorkingDirectory();
+					break;
+				case "existsfile" :
+					returnValue = ftpConnection.existsFile( StringCaster.cast( attributes.get( FTPKeys.remoteFile ) ) );
+					break;
+				case "existsdir" :
+					returnValue = ftpConnection.existsDir( StringCaster.cast( attributes.get( FTPKeys.directory ) ) );
 					break;
 			}
 			;
+
+			// Set our connection variable in the context
+			if ( attributes.containsKey( FTPKeys.connection ) && attributes.get( FTPKeys.connection ) instanceof String s ) {
+				context.getDefaultAssignmentScope().put( Key.of( s ), ftpConnection );
+			}
+
+			// Check if there is a return value to set in our ftp result
+			if ( returnValue != null ) {
+				ftpResult.setReturnValue( returnValue );
+			}
+
+			// Either assign a 'result' variable or return the result as a 'bxftp' variable
+			if ( attributes.containsKey( Key.result ) && attributes.get( Key.result ) instanceof String s ) {
+				context.getDefaultAssignmentScope().put( Key.of( s ), ftpResult );
+			} else {
+				context.getDefaultAssignmentScope().put( FTPKeys.bxftp, ftpResult );
+			}
+
 		} catch ( IOException e ) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
