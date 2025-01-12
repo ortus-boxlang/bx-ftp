@@ -161,7 +161,7 @@ public class FTP extends Component {
 
 		String				connectionName	= StringCaster.cast( ftpConnection );
 
-		ScopeSearchResult	result			= context.scopeFindNearby( Key.of( connectionName ), context.getDefaultAssignmentScope() );
+		ScopeSearchResult	result			= context.scopeFindNearby( Key.of( connectionName ), context.getDefaultAssignmentScope(), true );
 
 		if ( result.value() instanceof FTPConnection f ) {
 			return f;
