@@ -30,7 +30,7 @@ public class FTPTest {
 	static BoxRuntime	instance;
 	IBoxContext			context;
 	IScope				variables;
-	static Key			result	= new Key( "result" );
+	static Key			result		= new Key( "result" );
 	static Key			myResult	= new Key( "myResult" );
 	static String		FTPMode		= "active";
 
