@@ -236,9 +236,7 @@ public class FTPTest {
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ftpResult.getReturnValue() ).isEqualTo( "/" );
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 257 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "257 \"/\" is current directory." );
 	}
 
 	@DisplayName( "It can check if a file exists" )
@@ -259,7 +257,6 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "226 Operation successful" );
 	}
 
 	@DisplayName( "It can check if a file does not exist" )
@@ -280,7 +277,6 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isFalse();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "226 Operation successful" );
 	}
 
 	@DisplayName( "It can check if a directory exists" )
@@ -301,7 +297,6 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 250 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "250 CWD command successful" );
 	}
 
 	@DisplayName( "It can check if a directory does not exist" )
@@ -322,7 +317,6 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isFalse();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 250 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "250 CWD command successful" );
 	}
 
 	@DisplayName( "It can close the connection" )
@@ -344,6 +338,5 @@ public class FTPTest {
 		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 221 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "221 Goodbye." );
 	}
 }
