@@ -1,5 +1,5 @@
 {
-	"name": "@MODULE_NAME@",
+	"name": "FTP",
 	"version": "@build.version@+@build.number@",
 	"location": "https://downloads.ortussolutions.com/ortussolutions/boxlang-modules/@MODULE_SLUG@/@build.version@/@MODULE_SLUG@-@build.version@.zip",
 	"author": "Ortus Solutions",
@@ -10,13 +10,13 @@
 		"URL": "https://github.com/boxlang-modules/@MODULE_SLUG@"
 	},
 	"bugs": "https://github.com/boxlang-modules/@MODULE_SLUG@/issues",
-	"slug": "@MODULE_SLUG@",
+	"slug": "bx-ftp",
 	"shortDescription": "Module template for BoxLang modules",
 	"type": "boxlang-modules",
 	"keywords": ["boxlang"],
 	"boxlang": {
 		"minimumVersion": "1.0.0",
-		"moduleName": "@MODULE_REGISTERED_NAME@"
+		"moduleName": "ftp"
 	},
 	"private": false,
 	"license": [
