@@ -104,7 +104,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tests-${{ matrix.os }}-${{ matrix.jdkVersion }}
+          name: tests-${{ matrix.os }}-${{ matrix.jdkVersion }}-${{ matrix.ftpMode}}
           path: |
             **/build/reports/tests/**
             **/build/test-results/**
