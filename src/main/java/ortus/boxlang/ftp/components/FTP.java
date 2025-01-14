@@ -24,15 +24,16 @@ import ortus.boxlang.runtime.validation.Validator;
 public class FTP extends Component {
 
 	public final static String[] actions = new String[] {
-	    "open",
-	    "listdir",
-	    "createDir",
-	    "removeDir",
 	    "changedir",
-	    "getCurrentDir",
-	    "close",
+		    "close",
+	    "createDir",
+		    "existsDir",
 	    "existsFile",
-	    "existsDir"
+	    "getCurrentDir",
+	    "getfile",
+	    "listdir",
+	    "open",
+	    "removeDir"
 	};
 
 	public FTP() {
@@ -48,7 +49,9 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys._new, "string" ),
 		    new Attribute( FTPKeys.stopOnError, "boolean" ),
 		    new Attribute( FTPKeys.passive, "boolean", false ),
-		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) )
+		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) ),
+			new Attribute( FTPKeys.remoteFile, "string" ),
+			new Attribute( FTPKeys.localFile, "string" )
 		};
 	}
 
@@ -98,6 +101,12 @@ public class FTP extends Component {
 					break;
 				case "createdir" :
 					ftpConnection.createDir( StringCaster.cast( attributes.get( FTPKeys._new ) ) );
+					break;
+				case "getfile" :
+					ftpConnection.getFile(
+					    StringCaster.cast( attributes.get( FTPKeys.remoteFile ) ),
+					    StringCaster.cast( attributes.get( FTPKeys.localFile ) )
+					);
 					break;
 				case "removedir" :
 					ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );

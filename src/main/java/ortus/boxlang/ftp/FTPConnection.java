@@ -1,6 +1,8 @@
 package ortus.boxlang.ftp;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.Duration;
 import java.util.Arrays;
 
@@ -49,6 +51,13 @@ public class FTPConnection {
 				client.enterLocalActiveMode();
 			}
 		}
+	}
+
+	public void getFile( String remoteFile, String localFile ) throws IOException {
+		try ( OutputStream outputStream = new FileOutputStream( localFile ) ) {
+			client.retrieveFile( remoteFile, outputStream );
+		}
+		this.handleError();
 	}
 
 	public int getStatusCode() {

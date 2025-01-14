@@ -14,5 +14,6 @@ public class FTPKeys {
 	public final static Key	passive			= Key.of( "passive" );
 	public final static Key	_new			= Key.of( "new" );
 	public final static Key	remoteFile		= Key.of( "remoteFile" );
+	public final static Key	localFile		= Key.of( "localFile" );
 	public final static Key	directory		= Key.of( "directory" );
 }

@@ -339,4 +339,60 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 221 );
 	}
+
+	@DisplayName( "It can change the working directory" )
+	@Test
+	public void testChangeWorkingDirectoryWithRelativePath() {
+		// @formatter:off
+		instance.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="changedir" connection="conn" directory="a_sub_folder"/>
+				<bx:ftp action="changedir" connection="conn" directory=".." />
+				<bx:ftp action="listdir" connection="conn" name="result"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		FTPConnection conn = ( FTPConnection ) variables.get( "conn" );
+
+		assertThat( conn ).isInstanceOf( FTPConnection.class );
+
+		try {
+			assertThat( conn.getWorkingDirectory() ).doesNotContain( "a_sub_folder" );
+		} catch ( IOException e ) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		Query arr = ( Query ) variables.get( result );
+
+		assertThat( Arrays.asList( arr.getColumnData( Key._name ) ) ).contains( "a_sub_folder" );
+
+	}
+
+	@DisplayName( "It can get a file" )
+	@Test
+	public void testGetFile() {
+		// @formatter:off
+		instance.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
+				<bx:set result = fileExists( "something.txt" ) />
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		assertThat( variables.get( myResult ) ).isInstanceOf( FTPResult.class );
+
+		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
+		assertThat( ftpResult.isSuccessful() ).isTrue();
+		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
+		assertThat( variables.getAsBoolean( Key.result ) ).isTrue();
+	}
 }
