@@ -25,9 +25,9 @@ public class FTP extends Component {
 
 	public final static String[] actions = new String[] {
 	    "changedir",
-		    "close",
+	    "close",
 	    "createDir",
-		    "existsDir",
+	    "existsDir",
 	    "existsFile",
 	    "getCurrentDir",
 	    "getfile",
@@ -50,8 +50,8 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys.stopOnError, "boolean" ),
 		    new Attribute( FTPKeys.passive, "boolean", false ),
 		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) ),
-			new Attribute( FTPKeys.remoteFile, "string" ),
-			new Attribute( FTPKeys.localFile, "string" )
+		    new Attribute( FTPKeys.remoteFile, "string" ),
+		    new Attribute( FTPKeys.localFile, "string" )
 		};
 	}
 
