@@ -417,4 +417,36 @@ public class FTPTest {
 
 		assertThat( exception.getMessage() ).contains( "Local file already exists" );
 	}
+
+	@DisplayName( "It can put a file" )
+	@Test
+	public void testPutFile() {
+		// @formatter:off
+		instance.executeSource(
+			"""
+				<bx:set fileWrite( "test_put.txt", "somedata" ) />
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="putfile" connection="conn" remoteFile="remote_test_put.txt" localFile="test_put.txt" result="myResult"/>
+				<bx:set fileDelete( "test_put.txt" ) />
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
+		assertThat( ftpResult.isSuccessful() ).isTrue();
+		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
+
+		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
+			instance.executeSource(
+			    """
+			    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+			    <bx:ftp action="putfile" connection="conn" remoteFile="something.txt" localFile="does_not_exists.txt" result="myResult"/>
+			    """,
+			    context,
+			    BoxSourceType.BOXTEMPLATE
+			);
+		} );
+	}
 }

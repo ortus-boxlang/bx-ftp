@@ -64,6 +64,17 @@ public class FTPConnection {
 		this.handleError();
 	}
 
+	public void putFile( String localFile, String remoteFile ) throws IOException {
+		java.io.File file = new java.io.File( localFile );
+		if ( !file.exists() ) {
+			throw new BoxRuntimeException( "Error: Local file does not exist: " + localFile );
+		}
+		try ( java.io.FileInputStream inputStream = new java.io.FileInputStream( localFile ) ) {
+			client.storeFile( remoteFile, inputStream );
+		}
+		this.handleError();
+	}
+
 	public int getStatusCode() {
 		return client.getReplyCode();
 	}

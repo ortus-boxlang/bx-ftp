@@ -33,7 +33,8 @@ public class FTP extends Component {
 	    "getfile",
 	    "listdir",
 	    "open",
-	    "removeDir"
+	    "putfile",
+		    "removeDir"
 	};
 
 	public FTP() {
@@ -129,6 +130,11 @@ public class FTP extends Component {
 				case "existsdir" :
 					returnValue = ftpConnection.existsDir( StringCaster.cast( attributes.get( FTPKeys.directory ) ) );
 					break;
+				case "putfile" :
+					ftpConnection.putFile(
+					    StringCaster.cast( attributes.get( FTPKeys.localFile ) ),
+					    StringCaster.cast( attributes.get( FTPKeys.remoteFile ) )
+					);
 			}
 			;
 
