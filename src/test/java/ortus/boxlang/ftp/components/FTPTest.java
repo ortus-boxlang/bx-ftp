@@ -1,6 +1,7 @@
 package ortus.boxlang.ftp.components;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,6 +25,7 @@ import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.scopes.VariablesScope;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
+import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
 
 public class FTPTest {
 
@@ -382,6 +384,7 @@ public class FTPTest {
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
 				<bx:set result = fileExists( "something.txt" ) />
+				<bx:set delete = fileDelete( "something.txt" ) />
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
@@ -394,5 +397,24 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
 		assertThat( variables.getAsBoolean( Key.result ) ).isTrue();
+
+		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
+			instance.executeSource(
+			    """
+			       <bx:set fileWrite( "something.txt", "somedata" ) />
+			       <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+			       <bx:try>
+			    	<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
+			    	<bx:finally>
+			    		<bx:set fileDelete( "something.txt" ) />
+			    	</bx:finally>
+			    </bx:try>
+			       """,
+			    context,
+			    BoxSourceType.BOXTEMPLATE
+			);
+		} );
+
+		assertThat( exception.getMessage() ).contains( "Local file already exists" );
 	}
 }

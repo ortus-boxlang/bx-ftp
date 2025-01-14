@@ -54,6 +54,10 @@ public class FTPConnection {
 	}
 
 	public void getFile( String remoteFile, String localFile ) throws IOException {
+		java.io.File file = new java.io.File( localFile );
+		if ( file.exists() ) {
+			throw new BoxRuntimeException( "Error: Local file already exists: " + localFile );
+		}
 		try ( OutputStream outputStream = new FileOutputStream( localFile ) ) {
 			client.retrieveFile( remoteFile, outputStream );
 		}
