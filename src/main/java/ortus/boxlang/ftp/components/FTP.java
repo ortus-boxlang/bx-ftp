@@ -34,7 +34,7 @@ public class FTP extends Component {
 	    "listdir",
 	    "open",
 	    "putfile",
-		    "removeDir"
+	    "removeDir"
 	};
 
 	public FTP() {
