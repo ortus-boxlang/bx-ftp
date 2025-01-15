@@ -92,8 +92,8 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "conn" ) ).isInstanceOf( FTPConnection.class );
-		assertThat( variables.get( "myResult" ) ).isInstanceOf( FTPResult.class );
+		assertThat( variables.get( "conn" ).getClass().getName() ).isEqualTo( "FTPConnection" );
+		assertThat( variables.get( "myResult" ).getClass().getName() ).isEqualTo( "FTPResult" );
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
@@ -114,8 +114,8 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "conn" ) ).isInstanceOf( FTPConnection.class );
-		assertThat( variables.get( "myResult" ) ).isInstanceOf( FTPResult.class );
+		assertThat( variables.get( "conn" ).getClass().getName() ).isEqualTo( "FTPConnection" );
+		assertThat( variables.get( "myResult" ).getClass().getName() ).isEqualTo( "FTPResult" );
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
@@ -211,12 +211,9 @@ public class FTPTest extends BaseIntegrationTest {
 
 		FTPConnection conn = ( FTPConnection ) variables.get( "conn" );
 
-		assertThat( conn ).isInstanceOf( FTPConnection.class );
-
 		try {
 			assertThat( conn.getWorkingDirectory() ).contains( "a_sub_folder" );
 		} catch ( IOException e ) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -339,7 +336,7 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "myResult" ) ).isInstanceOf( FTPResult.class );
+		assertThat( variables.get( "myResult" ).getClass().getName() ).isEqualTo( "FTPResult" );
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
@@ -364,12 +361,9 @@ public class FTPTest extends BaseIntegrationTest {
 
 		FTPConnection conn = ( FTPConnection ) variables.get( "conn" );
 
-		assertThat( conn ).isInstanceOf( FTPConnection.class );
-
 		try {
 			assertThat( conn.getWorkingDirectory() ).doesNotContain( "a_sub_folder" );
 		} catch ( IOException e ) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -393,8 +387,6 @@ public class FTPTest extends BaseIntegrationTest {
 			BoxSourceType.BOXTEMPLATE
 		);
 		// @formatter:on
-
-		assertThat( variables.get( myResult ) ).isInstanceOf( FTPResult.class );
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
