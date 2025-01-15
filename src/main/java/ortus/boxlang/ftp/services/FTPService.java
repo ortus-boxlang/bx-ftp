@@ -29,6 +29,9 @@ import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.services.BaseService;
 
+/**
+ * This service is in charge of managing all FTP connections and their lifecycles.
+ */
 public class FTPService extends BaseService {
 
 	/**
@@ -70,7 +73,7 @@ public class FTPService extends BaseService {
 	 */
 	public FTPService( BoxRuntime runtime ) {
 		super( runtime, FTPKeys.FTPService );
-		getLogger().debug( "FTP Service built" );
+		getLogger().trace( "+ FTP Service built" );
 		runtime.getInterceptorService().registerInterceptionPoint( INTERCEPTION_POINTS );
 	}
 
@@ -86,16 +89,9 @@ public class FTPService extends BaseService {
 	}
 
 	@Override
-	public void onShutdown( Boolean arg0 ) {
+	public void onShutdown( Boolean force ) {
 		getLogger().info( "+ FTP Service shutdown requested" );
-		this.ftpConnections.forEach( ( key, connection ) -> {
-			try {
-				connection.close();
-			} catch ( IOException e ) {
-				getLogger().error( "Error closing connection: " + key.getName(), e );
-			}
-		} );
-		this.ftpConnections.clear();
+		shutdownAllConnections();
 	}
 
 	@Override
@@ -158,6 +154,20 @@ public class FTPService extends BaseService {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Shutdown and remove all connections
+	 */
+	public void shutdownAllConnections() {
+		this.ftpConnections.forEach( ( key, connection ) -> {
+			try {
+				connection.close();
+			} catch ( IOException e ) {
+				getLogger().error( "Error closing connection: " + key.getName(), e );
+			}
+		} );
+		this.ftpConnections.clear();
 	}
 
 	/**

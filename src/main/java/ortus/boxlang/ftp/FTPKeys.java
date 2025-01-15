@@ -21,19 +21,20 @@ import ortus.boxlang.runtime.scopes.Key;
 
 public class FTPKeys {
 
-	public static final Key	bxftp					= Key.of( "bxftp" );
-	public static final Key	isDirectory				= Key.of( "isDirectory" );
-	public static final Key	lastModified			= Key.of( "lastModified" );
-	public static final Key	url						= Key.of( "url" );
-	public static final Key	raw						= Key.of( "raw" );
-	public static final Key	connection				= Key.of( "connection" );
-	public static final Key	stopOnError				= Key.of( "stopOnError" );
-	public static final Key	passive					= Key.of( "passive" );
 	public static final Key	_new					= Key.of( "new" );
-	public static final Key	remoteFile				= Key.of( "remoteFile" );
-	public static final Key	localFile				= Key.of( "localFile" );
+	public static final Key	bxftp					= Key.of( "bxftp" );
+	public static final Key	connection				= Key.of( "connection" );
 	public static final Key	directory				= Key.of( "directory" );
 	public static final Key	FTPService				= Key.of( "ftpService" );
+	public static final Key	isDirectory				= Key.of( "isDirectory" );
+	public static final Key	lastModified			= Key.of( "lastModified" );
+	public static final Key	localFile				= Key.of( "localFile" );
+	public static final Key	passive					= Key.of( "passive" );
+	public static final Key	raw						= Key.of( "raw" );
+	public static final Key	remoteFile				= Key.of( "remoteFile" );
+	public static final Key	stopOnError				= Key.of( "stopOnError" );
+	public static final Key	timeout					= Key.of( "timeout" );
+	public static final Key	url						= Key.of( "url" );
 
 	// Events
 	public static final Key	onFTPConnectionOpen		= Key.of( "onFTPConnectionOpen" );

@@ -34,8 +34,6 @@ import org.junit.jupiter.api.Test;
 
 import ortus.boxlang.compiler.parser.BoxSourceType;
 import ortus.boxlang.ftp.BaseIntegrationTest;
-import ortus.boxlang.ftp.FTPConnection;
-import ortus.boxlang.ftp.FTPResult;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
@@ -81,24 +79,30 @@ public class FTPTest extends BaseIntegrationTest {
 
 	@DisplayName( "It can connect to an ftp server in active mode" )
 	@Test
-	public void testConnectWithUsernameAndPassword() {
+	public void testConnectWithUsernameAndPassword() throws ClassNotFoundException {
 		// @formatter:off
 		runtime.executeSource(
 			"""
-				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" result="myResult"/>
+				<bx:ftp action="open"
+					connection="conn"
+					username="#variables.username#"
+					password="#variables.password#"
+					server="#variables.server#"
+					port="#variables.port#"
+					result="myResult"/>
+
+				<bx:script>
+					println( conn );
+					println( myResult )
+				</bx:script>
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "conn" ).getClass().getSimpleName() ).isEqualTo( "FTPConnection" );
-		assertThat( variables.get( "myResult" ).getClass().getSimpleName() ).isEqualTo( "FTPResult" );
-
-		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 230 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "230 Login successful." );
+		IStruct myResult = ( IStruct ) variables.get( "myResult" );
+		assertThat( myResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
 	}
 
 	@DisplayName( "It can connect to an ftp server in passive mode" )
@@ -107,7 +111,14 @@ public class FTPTest extends BaseIntegrationTest {
 		// @formatter:off
 		runtime.executeSource(
 			"""
-				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="true" result="myResult"/>
+				<bx:ftp action="open"
+					connection="conn"
+					username="#variables.username#"
+					password="#variables.password#"
+					server="#variables.server#"
+					port="#variables.port#"
+					passive="true"
+					result="myResult"/>
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
@@ -115,12 +126,9 @@ public class FTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		assertThat( variables.get( "conn" ).getClass().getSimpleName() ).isEqualTo( "FTPConnection" );
-		assertThat( variables.get( "myResult" ).getClass().getSimpleName() ).isEqualTo( "FTPResult" );
 
-		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 230 );
-		assertThat( ftpResult.getStatusText() ).isEqualTo( "230 Login successful." );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
 	}
 
 	@DisplayName( "It can list files" )
@@ -200,27 +208,28 @@ public class FTPTest extends BaseIntegrationTest {
 		// @formatter:off
 		runtime.executeSource(
 			"""
-				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="open"
+					connection="conn"
+					username="#variables.username#"
+					password="#variables.password#"
+					server="#variables.server#"
+					port="#variables.port#"
+					passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="changedir" connection="conn" directory="a_sub_folder"/>
 				<bx:ftp action="listdir" connection="conn" name="result"/>
+				<bx:set conn = conn.toStruct()>
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
 		);
 		// @formatter:on
 
-		FTPConnection conn = ( FTPConnection ) variables.get( "conn" );
-
-		try {
-			assertThat( conn.getWorkingDirectory() ).contains( "a_sub_folder" );
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
+		IStruct conn = variables.getAsStruct( Key.of( "conn" ) );
+		assertThat( conn.getAsString( Key.of( "workingDirectory" ) ) ).contains( "a_sub_folder" );
 
 		Query arr = ( Query ) variables.get( result );
 
 		assertThat( Arrays.asList( arr.getColumnData( Key._name ) ) ).contains( "a-sub-file.md" );
-
 	}
 
 	@DisplayName( "It can get the current working directory" )
@@ -237,9 +246,8 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 257 );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
 	}
 
 	@DisplayName( "It can check if a file exists" )
@@ -256,10 +264,9 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
 	}
 
 	@DisplayName( "It can check if a file does not exist" )
@@ -276,10 +283,9 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isFalse();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
 	}
 
 	@DisplayName( "It can check if a directory exists" )
@@ -296,10 +302,9 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 250 );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
 	}
 
 	@DisplayName( "It can check if a directory does not exist" )
@@ -316,10 +321,9 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ( Boolean ) ftpResult.getReturnValue() ).isFalse();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 250 );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
 	}
 
 	@DisplayName( "It can close the connection" )
@@ -336,11 +340,10 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "myResult" ).getClass().getSimpleName() ).isEqualTo( "FTPResult" );
-
-		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 221 );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
+		assertThat( ftpResult.getAsInteger( Key.of( "statusCode" ) ) ).isEqualTo( 221 );
 	}
 
 	@DisplayName( "It can change the working directory" )
@@ -353,22 +356,17 @@ public class FTPTest extends BaseIntegrationTest {
 				<bx:ftp action="changedir" connection="conn" directory="a_sub_folder"/>
 				<bx:ftp action="changedir" connection="conn" directory=".." />
 				<bx:ftp action="listdir" connection="conn" name="result"/>
+				<bx:set conn = conn.toStruct()>
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
 		);
 		// @formatter:on
 
-		FTPConnection conn = ( FTPConnection ) variables.get( "conn" );
-
-		try {
-			assertThat( conn.getWorkingDirectory() ).doesNotContain( "a_sub_folder" );
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
+		IStruct conn = variables.getAsStruct( Key.of( "conn" ) );
+		assertThat( conn.getAsString( Key.of( "workingDirectory" ) ) ).doesNotContain( "a_sub_folder" );
 
 		Query arr = ( Query ) variables.get( result );
-
 		assertThat( Arrays.asList( arr.getColumnData( Key._name ) ) ).contains( "a_sub_folder" );
 
 	}
@@ -376,41 +374,42 @@ public class FTPTest extends BaseIntegrationTest {
 	@DisplayName( "It can get a file" )
 	@Test
 	public void testGetFile() {
-		// @formatter:off
-		runtime.executeSource(
-			"""
-				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
-				<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
-				<bx:set result = fileExists( "something.txt" ) />
-		    """,
-			context,
-			BoxSourceType.BOXTEMPLATE
-		);
-		// @formatter:on
-
-		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
-		assertThat( variables.getAsBoolean( Key.result ) ).isTrue();
-
-		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
+		try {
+			// @formatter:off
 			runtime.executeSource(
-			    """
-			       <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
-			    <bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
-			       """,
-			    context,
-			    BoxSourceType.BOXTEMPLATE
+				"""
+					<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+					<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
+					<bx:set result = fileExists( "something.txt" ) />
+				""",
+				context,
+				BoxSourceType.BOXTEMPLATE
 			);
-		} );
+			// @formatter:on
 
-		assertThat( exception.getMessage() ).contains( "Local file already exists" );
+			IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+			assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+			assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
+			assertThat( variables.getAsBoolean( Key.result ) ).isTrue();
 
-		File file = new File( "something.txt" );
-
-		if ( file.exists() ) {
-			file.delete();
+			BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
+				runtime.executeSource(
+				    """
+				       <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+				    <bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
+				       """,
+				    context,
+				    BoxSourceType.BOXTEMPLATE
+				);
+			} );
+			assertThat( exception.getMessage() ).contains( "Local file already exists" );
+		} finally {
+			File file = new File( "something.txt" );
+			if ( file.exists() ) {
+				file.delete();
+			}
 		}
+
 	}
 
 	@DisplayName( "It can put a file" )
@@ -429,9 +428,8 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
-		assertThat( ftpResult.isSuccessful() ).isTrue();
-		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
 
 		runtime.executeSource(
 		    """
@@ -442,7 +440,7 @@ public class FTPTest extends BaseIntegrationTest {
 		    BoxSourceType.BOXTEMPLATE
 		);
 
-		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
+		assertThrows( BoxRuntimeException.class, () -> {
 			runtime.executeSource(
 			    """
 			    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />

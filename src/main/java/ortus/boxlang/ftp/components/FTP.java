@@ -18,6 +18,7 @@
 package ortus.boxlang.ftp.components;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Set;
 
 import ortus.boxlang.ftp.FTPConnection;
@@ -43,7 +44,7 @@ import ortus.boxlang.runtime.validation.Validator;
 public class FTP extends Component {
 
 	/**
-	 * ORM service
+	 * FTP service
 	 */
 	private FTPService				ftpService		= ( FTPService ) runtime.getGlobalService( FTPKeys.FTPService );
 
@@ -88,7 +89,8 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys.passive, "boolean", false ),
 		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) ),
 		    new Attribute( FTPKeys.remoteFile, "string" ),
-		    new Attribute( FTPKeys.localFile, "string" )
+		    new Attribute( FTPKeys.localFile, "string" ),
+		    new Attribute( FTPKeys.timeout, "numeric", 30 )
 		};
 		this.logger			= ftpService.getLogger();
 	}
@@ -135,7 +137,8 @@ public class FTP extends Component {
 					    IntegerCaster.cast( attributes.get( Key.port ) ),
 					    StringCaster.cast( attributes.get( Key.username ) ),
 					    StringCaster.cast( attributes.get( Key.password ) ),
-					    BooleanCaster.cast( attributes.get( FTPKeys.passive ) )
+					    BooleanCaster.cast( attributes.get( FTPKeys.passive ) ),
+					    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) )
 					);
 					break;
 				case "close" :
@@ -164,13 +167,8 @@ public class FTP extends Component {
 					ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
 					break;
 				case "listdir" :
-					try {
-						Query files = ftpConnection.listdir();
-						context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
-					} catch ( IOException e ) {
-
-						e.printStackTrace();
-					}
+					Query files = ftpConnection.listdir();
+					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
 					break;
 				case "getcurrentdir" :
 					returnValue = ftpConnection.getWorkingDirectory();
@@ -201,9 +199,9 @@ public class FTP extends Component {
 
 			// Either assign a 'result' variable or return the result as a 'bxftp' variable
 			if ( attributes.containsKey( Key.result ) && attributes.get( Key.result ) instanceof String s ) {
-				context.getDefaultAssignmentScope().put( Key.of( s ), ftpResult );
+				context.getDefaultAssignmentScope().put( Key.of( s ), ftpResult.toStruct() );
 			} else {
-				context.getDefaultAssignmentScope().put( FTPKeys.bxftp, ftpResult );
+				context.getDefaultAssignmentScope().put( FTPKeys.bxftp, ftpResult.toStruct() );
 			}
 
 		} catch ( IOException e ) {

@@ -19,6 +19,9 @@ package ortus.boxlang.ftp;
 
 import org.apache.commons.net.ftp.FTPReply;
 
+import ortus.boxlang.runtime.types.IStruct;
+import ortus.boxlang.runtime.types.Struct;
+
 /**
  * Represents the result of an FTP operation.
  */
@@ -96,6 +99,30 @@ public class FTPResult {
 	public Boolean isSuccessful() {
 		int statusCode = getStatusCode();
 		return FTPReply.isPositiveCompletion( statusCode );
+	}
+
+	/**
+	 * Converts the result to a struct.
+	 */
+	public IStruct toStruct() {
+		return Struct.of(
+		    // Left for dumb ACF compat
+		    "errorCode", getStatusCode(),
+		    "errorText", getStatusText(),
+		    // Newer way
+		    "statusCode", getStatusCode(),
+		    "statusText", getStatusText(),
+		    "returnValue", getReturnValue(),
+		    "Succeeded", isSuccessful()
+		);
+	}
+
+	/**
+	 * Convert to String
+	 */
+	@Override
+	public String toString() {
+		return toStruct().toString();
 	}
 
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -32,6 +33,7 @@ import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
 import ortus.boxlang.runtime.types.QueryColumnType;
 import ortus.boxlang.runtime.types.Struct;
+import ortus.boxlang.runtime.types.exceptions.BoxIOException;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
 
 /**
@@ -40,21 +42,35 @@ import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
  */
 public class FTPConnection {
 
+	// Defaults
+	public static final int			DEFAULT_PORT			= 21;
+	public static final boolean		DEFAULT_PASSIVE			= false;
+	public static final String		DEFAULT_USERNAME		= "anonymous";
+	public static final String		DEFAULT_PASSWORD		= "anonymous";
+	public static final boolean		DEFAULT_STOP_ON_ERROR	= true;
+	// In Seconds
+	public static final Duration	DEFAULT_TIMEOUT			= Duration.ofSeconds( 30 );
+
 	/**
 	 * The FTPClient object used to communicate with the server.
 	 */
-	private FTPClient	client		= new FTPClient();
+	private FTPClient				client					= new FTPClient();
 
 	/**
 	 * If true, an exception will be thrown if an error occurs. If false, the
 	 * error will be ignored.
 	 */
-	private boolean		stopOnError	= false;
+	private boolean					stopOnError				= false;
 
 	/**
 	 * The name of the connection.
 	 */
-	private Key			name;
+	private Key						name;
+
+	/**
+	 * The username for the connection.
+	 */
+	private String					username;
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -78,20 +94,37 @@ public class FTPConnection {
 	 */
 
 	/**
-	 * Connect to an FTP server.
+	 * Connect to an FTP server and open a connection. If the username/password are null, the default anonymous user will be used.
+	 * If passive is null, the default is false.
 	 *
-	 * @param server
-	 * @param port
-	 * @param username
-	 * @param password
-	 * @param passive
+	 * @param server   The server to connect to
+	 * @param port     The port to connect to
+	 * @param username The username to use
+	 * @param password The password to use
+	 * @param passive  Whether to use passive mode
+	 * @param timeout  The timeout in seconds as a Duration
 	 *
-	 * @throws IOException
+	 * @throws IOException If an error occurs while connecting
 	 */
-	public void open( String server, Integer port, String username, String password, boolean passive ) throws IOException {
+	public FTPConnection open( String server,
+	    Integer port,
+	    String username,
+	    String password,
+	    boolean passive,
+	    Duration timeout ) throws IOException {
+		// Verify that the required parameters are present or default them
+		Objects.requireNonNull( server, "Server is required" );
+		Objects.requireNonNullElse( port, DEFAULT_PORT );
+		Objects.requireNonNullElse( passive, DEFAULT_PASSIVE );
+		Objects.requireNonNullElse( username, DEFAULT_USERNAME );
+		Objects.requireNonNullElse( password, DEFAULT_PASSWORD );
+		Objects.requireNonNullElse( timeout, DEFAULT_TIMEOUT );
+
+		// Store for future reference
+		this.username = username;
+
 		// Connect to the server
 		client.connect( server, port );
-		Duration timeout = Duration.ofSeconds( 0 );
 		client.setDataTimeout( timeout );
 
 		// Login with username and password
@@ -117,6 +150,8 @@ public class FTPConnection {
 				client.enterLocalActiveMode();
 			}
 		}
+
+		return this;
 	}
 
 	public void getFile( String remoteFile, String localFile ) throws IOException {
@@ -307,5 +342,52 @@ public class FTPConnection {
 			case 2 -> "symbolic link";
 			default -> "unknown";
 		};
+	}
+
+	/**
+	 * Get the connection metadata:
+	 * <ul>
+	 * <li>name</li>
+	 * <li>defaultPort</li>
+	 * <li>defaultTimeout</li>
+	 * <li>localAddress</li>
+	 * <li>remoteAddress</li>
+	 * <li>remotePort</li>
+	 * <li>status</li>
+	 * <li>systemName</li>
+	 * <li>user</li>
+	 * <li>passive</li>
+	 * </ul>
+	 *
+	 * @throws BoxIOException If an error occurs while getting the metadata.
+	 *
+	 * @return The metadata.
+	 */
+	public IStruct getMetadata() {
+		try {
+			return Struct.of(
+			    "defaultPort", client.getDefaultPort(),
+			    "defaultTimeout", client.getDefaultTimeout(),
+			    "localAddress", client.getLocalAddress(),
+			    "name", name,
+			    "passive", client.getPassiveHost() != null ? true : false,
+			    "remoteAddress", client.getRemoteAddress(),
+			    "remotePort", client.getRemotePort(),
+			    "status", client.getStatus(),
+			    "systemName", client.getSystemType(),
+			    "user", this.username,
+			    "workingDirectory", client.printWorkingDirectory()
+			);
+		} catch ( IOException e ) {
+			throw new BoxIOException( e );
+		}
+	}
+
+	/**
+	 * A string representation of the connection.
+	 */
+	@Override
+	public String toString() {
+		return getMetadata().toString();
 	}
 }
