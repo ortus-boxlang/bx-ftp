@@ -1,5 +1,5 @@
 {
-	"name": "FTP",
+	"name": "BoxLang FTP",
 	"version": "@build.version@+@build.number@",
 	"location": "https://downloads.ortussolutions.com/ortussolutions/boxlang-modules/bx-ftp/@build.version@/bx-ftp-@build.version@.zip",
 	"author": "Ortus Solutions",
@@ -13,7 +13,9 @@
 	"slug": "bx-ftp",
 	"shortDescription": "Module template for BoxLang modules",
 	"type": "boxlang-modules",
-	"keywords": ["boxlang"],
+	"keywords": [
+		"boxlang"
+	],
 	"boxlang": {
 		"minimumVersion": "1.0.0",
 		"moduleName": "ftp"
@@ -42,7 +44,6 @@
 		"gradle/**"
 	],
 	"scripts": {
-		"setupTemplate": "task run taskFile=src/build/SetupTemplate.cfc",
 		"onRelease": "publish"
 	}
 }

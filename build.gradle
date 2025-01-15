@@ -120,7 +120,7 @@ serviceLoader {
 jar {
     archiveVersion =  "${version}"
  	manifest {
-	   attributes 'Description': 'ExampleBoxLangModule'
+	   attributes 'Description': 'BoxLang FTP Module'
     }
 }
 shadowJar {
@@ -158,7 +158,7 @@ task createModuleStructure(type: Copy) {
 		// Token Replacements Go Here
 		filter{ line -> line.replaceAll( '@build.version@', project.version ) }
 		if( project.branch == "development" ){
-			filter{ line -> line.replaceAll( '\\+@build.number@', '-SNAPSHOT' ) }
+			filter{ line -> line.replaceAll( '\\+@build.number@', '' ) }
 		} else {
 			filter{ line -> line.replaceAll( '@build.number@', project.buildID ) }
 		}
@@ -170,7 +170,7 @@ task createModuleStructure(type: Copy) {
 		// Token Replacements Go Here
 		filter{ line -> line.replaceAll( '@build.version@', project.version ) }
 		if( project.branch == "development" ){
-			filter{ line -> line.replaceAll( '\\+@build.number@', '-SNAPSHOT' ) }
+			filter{ line -> line.replaceAll( '\\+@build.number@', '' ) }
 		} else {
 			filter{ line -> line.replaceAll( '@build.number@', project.buildID ) }
 		}
