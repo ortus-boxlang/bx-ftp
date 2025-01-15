@@ -92,8 +92,8 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "conn" ).getClass().getName() ).isEqualTo( "FTPConnection" );
-		assertThat( variables.get( "myResult" ).getClass().getName() ).isEqualTo( "FTPResult" );
+		assertThat( variables.get( "conn" ).getClass().getSimpleName() ).isEqualTo( "FTPConnection" );
+		assertThat( variables.get( "myResult" ).getClass().getSimpleName() ).isEqualTo( "FTPResult" );
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
@@ -114,8 +114,8 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "conn" ).getClass().getName() ).isEqualTo( "FTPConnection" );
-		assertThat( variables.get( "myResult" ).getClass().getName() ).isEqualTo( "FTPResult" );
+		assertThat( variables.get( "conn" ).getClass().getSimpleName() ).isEqualTo( "FTPConnection" );
+		assertThat( variables.get( "myResult" ).getClass().getSimpleName() ).isEqualTo( "FTPResult" );
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
@@ -336,7 +336,7 @@ public class FTPTest extends BaseIntegrationTest {
 		);
 		// @formatter:on
 
-		assertThat( variables.get( "myResult" ).getClass().getName() ).isEqualTo( "FTPResult" );
+		assertThat( variables.get( "myResult" ).getClass().getSimpleName() ).isEqualTo( "FTPResult" );
 
 		FTPResult ftpResult = ( FTPResult ) variables.get( "myResult" );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
