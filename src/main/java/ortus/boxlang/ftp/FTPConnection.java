@@ -75,6 +75,16 @@ public class FTPConnection {
 		this.handleError();
 	}
 
+	public void remove( String remoteFile ) {
+
+		try {
+			client.deleteFile( remoteFile );
+		} catch ( IOException e ) {
+			this.handleError();
+		}
+		this.handleError();
+	}
+
 	public int getStatusCode() {
 		return client.getReplyCode();
 	}

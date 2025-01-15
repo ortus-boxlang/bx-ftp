@@ -3,6 +3,7 @@ package ortus.boxlang.ftp.components;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -384,7 +385,6 @@ public class FTPTest {
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
 				<bx:set result = fileExists( "something.txt" ) />
-				<bx:set delete = fileDelete( "something.txt" ) />
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
@@ -401,14 +401,8 @@ public class FTPTest {
 		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
 			instance.executeSource(
 			    """
-			       <bx:set fileWrite( "something.txt", "somedata" ) />
 			       <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
-			       <bx:try>
-			    	<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
-			    	<bx:finally>
-			    		<bx:set fileDelete( "something.txt" ) />
-			    	</bx:finally>
-			    </bx:try>
+			    <bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
 			       """,
 			    context,
 			    BoxSourceType.BOXTEMPLATE
@@ -416,6 +410,12 @@ public class FTPTest {
 		} );
 
 		assertThat( exception.getMessage() ).contains( "Local file already exists" );
+
+		File file = new File( "something.txt" );
+
+		if ( file.exists() ) {
+			file.delete();
+		}
 	}
 
 	@DisplayName( "It can put a file" )
@@ -426,7 +426,7 @@ public class FTPTest {
 			"""
 				<bx:set fileWrite( "test_put.txt", "somedata" ) />
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
-				<bx:ftp action="putfile" connection="conn" remoteFile="remote_test_put.txt" localFile="test_put.txt" result="myResult"/>
+				<bx:ftp action="putfile" connection="conn" remoteFile="test_put.txt" localFile="test_put.txt" result="myResult"/>
 				<bx:set fileDelete( "test_put.txt" ) />
 		    """,
 			context,
@@ -437,6 +437,12 @@ public class FTPTest {
 		FTPResult ftpResult = ( FTPResult ) variables.get( myResult );
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
+
+		File file = new File( "resources/ftp_files/test_put.txt" );
+
+		if ( file.exists() ) {
+			file.delete();
+		}
 
 		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
 			instance.executeSource(
