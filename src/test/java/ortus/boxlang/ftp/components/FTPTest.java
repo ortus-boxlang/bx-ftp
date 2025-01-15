@@ -438,11 +438,14 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
 
-		File file = new File( "resources/ftp_files/test_put.txt" );
-
-		if ( file.exists() ) {
-			file.delete();
-		}
+		instance.executeSource(
+		    """
+		    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+		    <bx:ftp action="remove" connection="conn" item="test_put.txt" />
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
 
 		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
 			instance.executeSource(
