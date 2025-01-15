@@ -148,6 +148,17 @@ public class FTP extends Component {
 			ftpConnection.setStopOnError( stopOnErrorValue );
 		}
 
+		// Announce the FTP Action event
+		runtime.announce(
+		    FTPKeys.beforeFTPCall,
+		    Struct.of(
+		        "connection", ftpConnection,
+		        "action", action,
+		        "result", ftpResult,
+		        "attributes", attributes
+		    )
+		);
+
 		try {
 			switch ( action.toLowerCase() ) {
 				case "open" :
@@ -206,6 +217,7 @@ public class FTP extends Component {
 					returnValue = ftpConnection.existsDir( StringCaster.cast( attributes.get( FTPKeys.directory ) ) );
 					break;
 				case "putfile" :
+					// TODO: event onFTPPutFile
 					ftpConnection.putFile(
 					    StringCaster.cast( attributes.get( FTPKeys.localFile ) ),
 					    StringCaster.cast( attributes.get( FTPKeys.remoteFile ) )
@@ -229,6 +241,17 @@ public class FTP extends Component {
 			} else {
 				context.getDefaultAssignmentScope().put( FTPKeys.bxftp, ftpResult.toStruct() );
 			}
+
+			// Announce the FTP Action event
+			runtime.announce(
+			    FTPKeys.afterFTPCall,
+			    Struct.of(
+			        "connection", ftpConnection,
+			        "action", action,
+			        "result", ftpResult,
+			        "attributes", attributes
+			    )
+			);
 
 		} catch ( IOException e ) {
 			String message = String.format( "Error executing action [%s] -> [%s]", action, e.getMessage() );

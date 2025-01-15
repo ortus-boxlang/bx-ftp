@@ -39,4 +39,6 @@ public class FTPKeys {
 	// Events
 	public static final Key	onFTPConnectionOpen		= Key.of( "onFTPConnectionOpen" );
 	public static final Key	onFTPConnectionClose	= Key.of( "onFTPConnectionClose" );
+	public static final Key	afterFTPCall			= Key.of( "afterFTPCall" );
+	public static final Key	beforeFTPCall			= Key.of( "beforeFTPCall" );
 }
