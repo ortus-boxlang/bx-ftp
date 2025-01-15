@@ -97,13 +97,39 @@ public class FTP extends Component {
 
 	/**
 	 * An FTP component that allows you to interact with an FTP server.
+	 * <p>
+	 * The available actions are:
+	 * <ul>
+	 * <li>changedir</li>
+	 * <li>close</li>
+	 * <li>createDir</li>
+	 * <li>existsDir</li>
+	 * <li>existsFile</li>
+	 * <li>getCurrentDir</li>
+	 * <li>getfile</li>
+	 * <li>listdir</li>
+	 * <li>open</li>
+	 * <li>putfile</li>
+	 * <li>removeDir</li>
+	 * <li>remove</li>
+	 * </ul>
+	 *
+	 * <h2>Examples:</h2>
+	 *
+	 * <pre>
+	 * {@code
+	 * <bx:ftp action="open" server="ftp.server.com" port="21" username="user" password="password" connection="myConnection" >
+	 * <bx:ftp action="changedir" directory="newDir" connection="myConnection">
+	 * <bx:ftp action="close" connection="myConnection>
+	 * }
+	 * </pre>
 	 *
 	 * @param context        The context in which the Component is being invoked
 	 * @param attributes     The attributes to the Component
 	 * @param body           The body of the Component
 	 * @param executionState The execution state of the Component
 	 *
-	 * @attribute.name The name of the person greeting us.
+	 * @attribute.action The name of the person greeting us.
 	 *
 	 * @attribute.location The location of the person.
 	 *

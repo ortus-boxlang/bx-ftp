@@ -217,7 +217,7 @@ public class FTPTest extends BaseIntegrationTest {
 					passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="changedir" connection="conn" directory="a_sub_folder"/>
 				<bx:ftp action="listdir" connection="conn" name="result"/>
-				<bx:set conn = conn.toStruct()>
+				<bx:set conn = conn.getMetadata()>
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
@@ -356,7 +356,7 @@ public class FTPTest extends BaseIntegrationTest {
 				<bx:ftp action="changedir" connection="conn" directory="a_sub_folder"/>
 				<bx:ftp action="changedir" connection="conn" directory=".." />
 				<bx:ftp action="listdir" connection="conn" name="result"/>
-				<bx:set conn = conn.toStruct()>
+				<bx:set conn = conn.getMetadata()>
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
