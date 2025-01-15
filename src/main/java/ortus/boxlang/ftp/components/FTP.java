@@ -1,3 +1,20 @@
+/**
+ * [BoxLang]
+ *
+ * Copyright [2023] [Ortus Solutions, Corp]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ortus.boxlang.ftp.components;
 
 import java.io.IOException;
@@ -6,24 +23,39 @@ import java.util.Set;
 import ortus.boxlang.ftp.FTPConnection;
 import ortus.boxlang.ftp.FTPKeys;
 import ortus.boxlang.ftp.FTPResult;
+import ortus.boxlang.ftp.services.FTPService;
 import ortus.boxlang.runtime.components.Attribute;
 import ortus.boxlang.runtime.components.BoxComponent;
 import ortus.boxlang.runtime.components.Component;
 import ortus.boxlang.runtime.context.IBoxContext;
-import ortus.boxlang.runtime.context.IBoxContext.ScopeSearchResult;
 import ortus.boxlang.runtime.dynamic.casters.BooleanCaster;
 import ortus.boxlang.runtime.dynamic.casters.IntegerCaster;
 import ortus.boxlang.runtime.dynamic.casters.StringCaster;
+import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
-import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
+import ortus.boxlang.runtime.types.Struct;
+import ortus.boxlang.runtime.types.exceptions.BoxIOException;
 import ortus.boxlang.runtime.validation.Validator;
 
 @BoxComponent( allowsBody = false )
 public class FTP extends Component {
 
-	public final static String[] actions = new String[] {
+	/**
+	 * ORM service
+	 */
+	private FTPService				ftpService		= ( FTPService ) runtime.getGlobalService( FTPKeys.FTPService );
+
+	/**
+	 * The FTP logger
+	 */
+	BoxLangLogger					logger;
+
+	/**
+	 * The actions that can be performed by this component
+	 */
+	public static final String[]	VALID_ACTIONS	= new String[] {
 	    "changedir",
 	    "close",
 	    "createDir",
@@ -38,10 +70,13 @@ public class FTP extends Component {
 	    "remove"
 	};
 
+	/**
+	 * Constructor
+	 */
 	public FTP() {
 		super();
-		declaredAttributes = new Attribute[] {
-		    new Attribute( Key.action, "string", Set.of( Validator.REQUIRED, Validator.valueOneOf( actions ) ) ),
+		declaredAttributes	= new Attribute[] {
+		    new Attribute( Key.action, "string", Set.of( Validator.REQUIRED, Validator.valueOneOf( VALID_ACTIONS ) ) ),
 		    new Attribute( Key._name, "string" ),
 		    new Attribute( Key.username, "string" ),
 		    new Attribute( Key.password, "string" ),
@@ -55,10 +90,11 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys.remoteFile, "string" ),
 		    new Attribute( FTPKeys.localFile, "string" )
 		};
+		this.logger			= ftpService.getLogger();
 	}
 
 	/**
-	 * An example component that says hello
+	 * An FTP component that allows you to interact with an FTP server.
 	 *
 	 * @param context        The context in which the Component is being invoked
 	 * @param attributes     The attributes to the Component
@@ -87,6 +123,13 @@ public class FTP extends Component {
 		try {
 			switch ( action.toLowerCase() ) {
 				case "open" :
+					runtime.announce(
+					    FTPKeys.onFTPConnectionOpen,
+					    Struct.of(
+					        FTPKeys.connection, ftpConnection,
+					        "attributes", attributes
+					    )
+					);
 					ftpConnection.open(
 					    StringCaster.cast( attributes.get( Key.server ) ),
 					    IntegerCaster.cast( attributes.get( Key.port ) ),
@@ -96,6 +139,10 @@ public class FTP extends Component {
 					);
 					break;
 				case "close" :
+					runtime.announce(
+					    FTPKeys.onFTPConnectionClose,
+					    Struct.of( FTPKeys.connection, ftpConnection )
+					);
 					ftpConnection.close();
 					break;
 				case "changedir" :
@@ -160,36 +207,24 @@ public class FTP extends Component {
 			}
 
 		} catch ( IOException e ) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String message = String.format( "Error executing action [%s] -> [%s]", action, e.getMessage() );
+			this.logger.error( message, e );
+			throw new BoxIOException( message, e );
 		}
 
 		return DEFAULT_RETURN;
 	}
 
+	/**
+	 * Find or initialize a connection to the FTP server
+	 *
+	 * @param context    The context in which the Component is being invoked
+	 * @param attributes The attributes to the Component
+	 *
+	 * @return The FTP connection
+	 */
 	private FTPConnection findOrInitializeConnection( IBoxContext context, IStruct attributes ) {
-		Object ftpConnection = attributes.get( FTPKeys.connection );
-
-		if ( ftpConnection instanceof FTPConnection f ) {
-			return f;
-		}
-
-		if ( ! ( ftpConnection instanceof String ) ) {
-			throw new BoxRuntimeException( "connection is not a valid FTPConnection" );
-		}
-
-		String				connectionName	= StringCaster.cast( ftpConnection );
-
-		ScopeSearchResult	result			= context.scopeFindNearby( Key.of( connectionName ), context.getDefaultAssignmentScope(), true );
-
-		if ( result.value() instanceof FTPConnection f ) {
-			return f;
-		}
-
-		FTPConnection conn = new FTPConnection();
-
-		context.getDefaultAssignmentScope().assign( context, Key.of( connectionName ), conn );
-
-		return conn;
+		String connectionName = attributes.getAsString( FTPKeys.connection ).trim();
+		return this.ftpService.getOrBuildConnection( Key.of( connectionName ) );
 	}
 }
