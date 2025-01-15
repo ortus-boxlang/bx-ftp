@@ -33,30 +33,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import ortus.boxlang.compiler.parser.BoxSourceType;
+import ortus.boxlang.ftp.BaseIntegrationTest;
 import ortus.boxlang.ftp.FTPConnection;
 import ortus.boxlang.ftp.FTPResult;
-import ortus.boxlang.runtime.BoxRuntime;
-import ortus.boxlang.runtime.context.IBoxContext;
-import ortus.boxlang.runtime.context.ScriptingRequestBoxContext;
-import ortus.boxlang.runtime.scopes.IScope;
 import ortus.boxlang.runtime.scopes.Key;
-import ortus.boxlang.runtime.scopes.VariablesScope;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
 
-public class FTPTest {
+public class FTPTest extends BaseIntegrationTest {
 
-	static BoxRuntime	instance;
-	IBoxContext			context;
-	IScope				variables;
-	static Key			result		= new Key( "result" );
-	static Key			myResult	= new Key( "myResult" );
-	static String		FTPMode		= "active";
+	static Key		myResult	= new Key( "myResult" );
+	static String	FTPMode		= "active";
 
 	@BeforeAll
 	public static void setUp() {
-		instance = BoxRuntime.getInstance( true );
 		String SystemFTPMode = System.getenv( "ftpMode" );
 		if ( SystemFTPMode != null ) {
 			FTPMode = SystemFTPMode;
@@ -65,9 +56,7 @@ public class FTPTest {
 
 	@BeforeEach
 	public void setupEach() {
-		context		= new ScriptingRequestBoxContext( instance.getRuntimeContext() );
-		variables	= context.getScopeNearby( VariablesScope.name );
-
+		super.setupEach();
 		try {
 			String	dir		= System.getProperty( "user.dir" );
 			String	envFile	= "./resources/.env";
@@ -75,13 +64,10 @@ public class FTPTest {
 			if ( dir.endsWith( "bx-ftp" ) ) {
 				envFile = dir + "/src/test/resources/.env";
 			}
-
 			System.getProperties().load( new FileInputStream( envFile ) );
 		} catch ( FileNotFoundException e ) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch ( IOException e ) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -97,7 +83,7 @@ public class FTPTest {
 	@Test
 	public void testConnectWithUsernameAndPassword() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" result="myResult"/>
 		    """,
@@ -119,7 +105,7 @@ public class FTPTest {
 	@Test
 	public void testConnectWithUsernameAndPasswordPassive() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="true" result="myResult"/>
 		    """,
@@ -142,7 +128,7 @@ public class FTPTest {
 	public void testListFiles() {
 
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="listdir" connection="conn" directory="/" name="result"/>
@@ -167,7 +153,7 @@ public class FTPTest {
 	@Test
 	public void testCreateFolder() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="removeDir" item="new_folder" connection="conn" stopOnError=false />
@@ -190,7 +176,7 @@ public class FTPTest {
 	@Test
 	public void testDeleteDirectory() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#"/>
 				<bx:ftp action="removeDir" item="new_folder" connection="conn" stopOnError=false />
@@ -212,7 +198,7 @@ public class FTPTest {
 	@Test
 	public void testChangeWorkingDirectory() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="changedir" connection="conn" directory="a_sub_folder"/>
@@ -244,7 +230,7 @@ public class FTPTest {
 	@Test
 	public void testGetWorkingDirectory() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="getCurrentDir" connection="conn" result="myResult"/>
@@ -263,7 +249,7 @@ public class FTPTest {
 	@Test
 	public void testFileExists() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="existsFile" connection="conn" remoteFile="something.txt" result="myResult"/>
@@ -283,7 +269,7 @@ public class FTPTest {
 	@Test
 	public void testFileDoesNotExist() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="existsFile" connection="conn" remoteFile="does_not_exist.txt" result="myResult"/>
@@ -303,7 +289,7 @@ public class FTPTest {
 	@Test
 	public void testDirectoryExists() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="existsDir" connection="conn" directory="a_sub_folder" result="myResult"/>
@@ -323,7 +309,7 @@ public class FTPTest {
 	@Test
 	public void testDirectoryDoesNotExist() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="existsDir" connection="conn" directory="does_not_exist" result="myResult"/>
@@ -343,7 +329,7 @@ public class FTPTest {
 	@Test
 	public void testCloseConnection() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="close" connection="conn" result="myResult"/>
@@ -364,7 +350,7 @@ public class FTPTest {
 	@Test
 	public void testChangeWorkingDirectoryWithRelativePath() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="changedir" connection="conn" directory="a_sub_folder"/>
@@ -397,7 +383,7 @@ public class FTPTest {
 	@Test
 	public void testGetFile() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 				<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
@@ -416,7 +402,7 @@ public class FTPTest {
 		assertThat( variables.getAsBoolean( Key.result ) ).isTrue();
 
 		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
-			instance.executeSource(
+			runtime.executeSource(
 			    """
 			       <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 			    <bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
@@ -439,7 +425,7 @@ public class FTPTest {
 	@Test
 	public void testPutFile() {
 		// @formatter:off
-		instance.executeSource(
+		runtime.executeSource(
 			"""
 				<bx:set fileWrite( "test_put.txt", "somedata" ) />
 				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
@@ -455,7 +441,7 @@ public class FTPTest {
 		assertThat( ftpResult.isSuccessful() ).isTrue();
 		assertThat( ftpResult.getStatusCode() ).isEqualTo( 226 );
 
-		instance.executeSource(
+		runtime.executeSource(
 		    """
 		    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 		    <bx:ftp action="remove" connection="conn" item="test_put.txt" />
@@ -465,7 +451,7 @@ public class FTPTest {
 		);
 
 		BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
-			instance.executeSource(
+			runtime.executeSource(
 			    """
 			    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 			    <bx:ftp action="putfile" connection="conn" remoteFile="something.txt" localFile="does_not_exists.txt" result="myResult"/>

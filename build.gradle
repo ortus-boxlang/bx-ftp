@@ -115,6 +115,7 @@ serviceLoader {
     serviceInterface 'ortus.boxlang.runtime.async.tasks.IScheduler'
     serviceInterface 'ortus.boxlang.runtime.cache.providers.ICacheProvider'
 	serviceInterface 'ortus.boxlang.runtime.events.IInterceptor'
+	serviceInterface 'ortus.boxlang.runtime.services.IService'
 }
 
 jar {
