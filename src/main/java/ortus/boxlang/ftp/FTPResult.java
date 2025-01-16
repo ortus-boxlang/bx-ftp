@@ -88,7 +88,7 @@ public class FTPResult {
 	 * @return The status code of the operation.
 	 */
 	public String getStatusText() {
-		return this.conn.getStatusText().trim();
+		return this.conn.getStatusText();
 	}
 
 	/**

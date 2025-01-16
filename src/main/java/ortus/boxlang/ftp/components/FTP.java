@@ -89,7 +89,7 @@ public class FTP extends Component {
 		    new Attribute( Key.password, "string" ),
 		    new Attribute( FTPKeys.stopOnError, "boolean" ),
 		    new Attribute( FTPKeys.passive, "boolean", FTPConnection.DEFAULT_PASSIVE ),
-		    new Attribute( FTPKeys.timeout, "numeric" ),
+		    new Attribute( FTPKeys.timeout, "numeric", FTPConnection.DEFAULT_TIMEOUT.toSeconds() ),
 
 		    // Directory on which to performan an operation. Required for actions: changeDir, createDir, listDir, existsDir
 		    new Attribute( Key.directory, "string" ),

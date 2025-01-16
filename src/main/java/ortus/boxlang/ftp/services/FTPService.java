@@ -17,7 +17,6 @@
  */
 package ortus.boxlang.ftp.services;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -28,6 +27,7 @@ import ortus.boxlang.runtime.BoxRuntime;
 import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.services.BaseService;
+import ortus.boxlang.runtime.types.exceptions.BoxIOException;
 
 /**
  * This service is in charge of managing all FTP connections and their lifecycles.
@@ -147,11 +147,7 @@ public class FTPService extends BaseService {
 	public boolean removeConnection( Key name ) {
 		FTPConnection connection = this.ftpConnections.remove( name );
 		if ( connection != null ) {
-			try {
-				connection.close();
-			} catch ( IOException e ) {
-				getLogger().error( "Error closing connection: " + name.getName(), e );
-			}
+			connection.close();
 			return true;
 		}
 		return false;
@@ -164,8 +160,8 @@ public class FTPService extends BaseService {
 		this.ftpConnections.forEach( ( key, connection ) -> {
 			try {
 				connection.close();
-			} catch ( IOException e ) {
-				getLogger().error( "Error closing connection: " + key.getName(), e );
+			} catch ( BoxIOException e ) {
+				// continue remove all connections, this is taking care of in the `close()` method
 			}
 		} );
 		this.ftpConnections.clear();

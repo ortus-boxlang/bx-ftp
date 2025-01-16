@@ -142,32 +142,36 @@ public class FTPConnection {
 		this.username = username;
 
 		// Connect to the server
-		client.connect( server, port );
-		client.setDataTimeout( timeout );
+		this.client.connect( server, port );
+		this.client.setDataTimeout( timeout );
 
 		// Login with username and password
-		if ( !client.login( username, password ) ) {
-			client.disconnect();
-			throw new BoxRuntimeException( "FTP server refused connection: " + client.getReplyString() );
+		if ( !this.client.login( username, password ) ) {
+			this.client.disconnect();
+			this.logger.error( "FTP server refused connection: " + this.client.getReplyString() );
+			throw new BoxRuntimeException( "FTP server refused connection: " + this.client.getReplyString() );
 		}
 
 		// Check for a positive response
-		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) ) {
-			client.disconnect();
-			throw new BoxRuntimeException( "FTP server refused connection: " + client.getReplyString() );
+		if ( !FTPReply.isPositiveCompletion( this.client.getReplyCode() ) ) {
+			this.client.disconnect();
+			this.logger.error( "FTP server refused connection: " + this.client.getReplyString() );
+			throw new BoxRuntimeException( "FTP server refused connection: " + this.client.getReplyString() );
 		}
 
-		int mode = client.getDataConnectionMode();
+		int mode = this.client.getDataConnectionMode();
 
 		if ( passive ) {
 			if ( FTPClient.PASSIVE_LOCAL_DATA_CONNECTION_MODE != mode ) {
-				client.enterLocalPassiveMode();
+				this.client.enterLocalPassiveMode();
 			}
 		} else {
 			if ( FTPClient.ACTIVE_LOCAL_DATA_CONNECTION_MODE != mode ) {
-				client.enterLocalActiveMode();
+				this.client.enterLocalActiveMode();
 			}
 		}
+
+		this.logger.info( "FTP connection [{}] opened in [{}] mode.", this.name, passive ? "passive" : "active" );
 
 		return this;
 	}
@@ -216,7 +220,6 @@ public class FTPConnection {
 	 * @param remoteFile The name of the file you want to remove
 	 */
 	public void remove( String remoteFile ) {
-
 		try {
 			client.deleteFile( remoteFile );
 		} catch ( IOException e ) {
@@ -266,10 +269,29 @@ public class FTPConnection {
 	/**
 	 * Close the connection to the FTP server
 	 *
-	 * @throws IOException
+	 * @throws BoxIOException If an error occurs while closing the connection
 	 */
-	public void close() throws IOException {
-		client.logout();
+	public void close() {
+		try {
+			// Check if the connection is open or not first
+			if ( this.client.isConnected() ) {
+				this.client.logout(); // Logout before disconnecting
+				this.client.disconnect(); // Close the connection
+				this.logger.info( "FTP connection [{}] closed", this.name );
+			}
+		} catch ( IOException e ) {
+			this.logger.error( "Error while closing FTP connection: " + e.getMessage() );
+			throw new BoxIOException( e );
+		}
+	}
+
+	/**
+	 * Do we have an open or closed connection to the FTP server
+	 *
+	 * @return True if the connection is open, false otherwise
+	 */
+	public boolean isConnected() {
+		return this.client != null && this.client.isConnected();
 	}
 
 	/**
@@ -333,22 +355,20 @@ public class FTPConnection {
 	 *
 	 * @param dirName The name of the directory you want to check
 	 *
-	 * @return Boolean
+	 * @return True if the directory exists, false otherwise
 	 */
 	public Boolean existsDir( String dirName ) throws IOException {
-		String	pwd		= null;
-		Boolean	result	= null;
+		String pwd = null;
 		try {
-			pwd		= client.printWorkingDirectory();
-			result	= client.changeWorkingDirectory( dirName );
-			this.handleError();
-			return result;
+			pwd = client.printWorkingDirectory();
+			// If it works, then it's valid, else throws an exception
+			return client.changeWorkingDirectory( dirName );
 		} catch ( IOException e ) {
-			this.handleError();
 			return false;
 		} finally {
-			if ( pwd != null )
+			if ( pwd != null ) {
 				client.changeWorkingDirectory( pwd );
+			}
 		}
 	}
 
@@ -367,14 +387,17 @@ public class FTPConnection {
 		}
 	}
 
-	private void handleError() {
-		if ( FTPReply.isPositiveCompletion( client.getReplyCode() ) ) {
-			return;
-		}
+	/**
+	 * Handle an error by throwing an exception if stopOnError is true and
+	 * looking for a positive completion code.
+	 */
+	private FTPConnection handleError() {
 
-		if ( stopOnError ) {
+		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) && stopOnError ) {
 			throw new BoxRuntimeException( "FTP error: " + client.getReplyString() );
 		}
+
+		return this;
 	}
 
 	public Query listdir() throws IOException {
@@ -484,22 +507,23 @@ public class FTPConnection {
 	 *
 	 * @throws BoxIOException If an error occurs while getting the metadata.
 	 *
-	 * @return The metadata.
+	 * @return The metadata of the connection as a struct. If the connection is not open, an empty struct is returned.
 	 */
 	public IStruct getMetadata() {
 		try {
 			return Struct.of(
-			    "defaultPort", client.getDefaultPort(),
-			    "defaultTimeout", client.getDefaultTimeout(),
-			    "localAddress", client.getLocalAddress(),
+			    "defaultPort", this.client.getDefaultPort(),
+			    "defaultTimeout", this.client.getDefaultTimeout(),
+			    "defaultDataTimeout", this.client.getDataTimeout(),
+			    "localAddress", isConnected() ? this.client.getLocalAddress() : "",
 			    "name", name,
-			    "passive", client.getPassiveHost() != null ? true : false,
-			    "remoteAddress", client.getRemoteAddress(),
-			    "remotePort", client.getRemotePort(),
-			    "status", client.getStatus(),
-			    "systemName", client.getSystemType(),
+			    "passive", this.client.getPassiveHost() != null ? true : false,
+			    "remoteAddress", isConnected() ? this.client.getRemoteAddress() : "",
+			    "remotePort", isConnected() ? this.client.getRemotePort() : "",
+			    "status", isConnected() ? this.client.getStatus() : "closed",
+			    "systemName", isConnected() ? this.client.getSystemType() : "",
 			    "user", this.username,
-			    "workingDirectory", client.printWorkingDirectory()
+			    "workingDirectory", isConnected() ? this.client.printWorkingDirectory() : ""
 			);
 		} catch ( IOException e ) {
 			throw new BoxIOException( e );
