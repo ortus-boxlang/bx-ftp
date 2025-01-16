@@ -378,8 +378,20 @@ public class FTPTest extends BaseIntegrationTest {
 			// @formatter:off
 			runtime.executeSource(
 				"""
-					<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
-					<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
+					<bx:ftp
+						action="open"
+						connection="conn"
+						username="#variables.username#"
+						password="#variables.password#"
+						server="#variables.server#"
+						port="#variables.port#"
+						passive="#(variables.ftpMode == 'passive')#" />
+					<bx:ftp
+						action="getfile"
+						connection="conn"
+						remoteFile="something.txt"
+						localFile="something.txt"
+						result="myResult"/>
 					<bx:set result = fileExists( "something.txt" ) />
 				""",
 				context,
@@ -395,9 +407,9 @@ public class FTPTest extends BaseIntegrationTest {
 			BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
 				runtime.executeSource(
 				    """
-				       <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+				      <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
 				    <bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
-				       """,
+				      """,
 				    context,
 				    BoxSourceType.BOXTEMPLATE
 				);

@@ -28,6 +28,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
+import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
@@ -42,7 +43,12 @@ import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
  */
 public class FTPConnection {
 
-	// Defaults
+	/**
+	 * --------------------------------------------------------------------------
+	 * Defaults
+	 * --------------------------------------------------------------------------
+	 */
+
 	public static final int			DEFAULT_PORT			= 21;
 	public static final boolean		DEFAULT_PASSIVE			= false;
 	public static final String		DEFAULT_USERNAME		= "anonymous";
@@ -50,6 +56,12 @@ public class FTPConnection {
 	public static final boolean		DEFAULT_STOP_ON_ERROR	= true;
 	// In Seconds
 	public static final Duration	DEFAULT_TIMEOUT			= Duration.ofSeconds( 30 );
+
+	/**
+	 * --------------------------------------------------------------------------
+	 * Properties
+	 * --------------------------------------------------------------------------
+	 */
 
 	/**
 	 * The FTPClient object used to communicate with the server.
@@ -60,7 +72,7 @@ public class FTPConnection {
 	 * If true, an exception will be thrown if an error occurs. If false, the
 	 * error will be ignored.
 	 */
-	private boolean					stopOnError				= false;
+	private boolean					stopOnError				= DEFAULT_STOP_ON_ERROR;
 
 	/**
 	 * The name of the connection.
@@ -73,6 +85,11 @@ public class FTPConnection {
 	private String					username;
 
 	/**
+	 * The BoxLang logger to use
+	 */
+	private BoxLangLogger			logger;
+
+	/**
 	 * --------------------------------------------------------------------------
 	 * Constructors
 	 * --------------------------------------------------------------------------
@@ -83,8 +100,9 @@ public class FTPConnection {
 	 *
 	 * @param name The name of the connection
 	 */
-	public FTPConnection( Key name ) {
-		this.name = name;
+	public FTPConnection( Key name, BoxLangLogger logger ) {
+		this.name	= name;
+		this.logger	= logger;
 	}
 
 	/**
@@ -156,10 +174,10 @@ public class FTPConnection {
 
 	/**
 	 * Retrieve a file from the FTP server and write it out to a local file.
-	 * 
+	 *
 	 * @param remoteFile The name of the file to copy
 	 * @param localFile  The path of hte file to save
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void getFile( String remoteFile, String localFile ) throws IOException {
@@ -175,10 +193,10 @@ public class FTPConnection {
 
 	/**
 	 * Put a file on the remote server
-	 * 
+	 *
 	 * @param localFile  The file path of the local file you want to copy
 	 * @param remoteFile The name of the remote file you want to create/update
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void putFile( String localFile, String remoteFile ) throws IOException {
@@ -194,7 +212,7 @@ public class FTPConnection {
 
 	/**
 	 * Remove a file on the FTP server
-	 * 
+	 *
 	 * @param remoteFile The name of the file you want to remove
 	 */
 	public void remove( String remoteFile ) {
@@ -209,7 +227,7 @@ public class FTPConnection {
 
 	/**
 	 * Return the most recent reply code from the FTP Server
-	 * 
+	 *
 	 * @return
 	 */
 	public int getStatusCode() {
@@ -218,7 +236,7 @@ public class FTPConnection {
 
 	/**
 	 * Get the status text associated with the most recent reply from the FTP server
-	 * 
+	 *
 	 * @return
 	 */
 	public String getStatusText() {
@@ -227,7 +245,7 @@ public class FTPConnection {
 
 	/**
 	 * Get the current selected working directory on the FTP server.
-	 * 
+	 *
 	 * @return String
 	 */
 	public String getWorkingDirectory() throws IOException {
@@ -236,9 +254,9 @@ public class FTPConnection {
 
 	/**
 	 * Change the working directory on the FTP server
-	 * 
+	 *
 	 * @param dirName The name of the folder/path you want to cd into
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void changeDir( String dirName ) throws IOException {
@@ -247,7 +265,7 @@ public class FTPConnection {
 
 	/**
 	 * Close the connection to the FTP server
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void close() throws IOException {
@@ -256,34 +274,34 @@ public class FTPConnection {
 
 	/**
 	 * Set the stopOnError flag
-	 * 
+	 *
 	 * @param stopOnError
 	 */
-	public void setStopOnError( boolean stopOnError ) {
+	public FTPConnection setStopOnError( boolean stopOnError ) {
 		this.stopOnError = stopOnError;
+		return this;
 	}
 
 	/**
 	 * Create a directory on the FTP server
-	 * 
+	 *
 	 * @param dirName The name of the directory you want to create
 	 */
-	public void createDir( String dirName ) {
+	public FTPConnection createDir( String dirName ) {
 		try {
 			client.makeDirectory( dirName );
-
 			this.handleError();
 		} catch ( IOException e ) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return this;
 	}
 
 	/**
 	 * Check if a file exists on the FTP server
-	 * 
+	 *
 	 * @param path The path to the file you want to check
-	 * 
+	 *
 	 * @return Boolean
 	 */
 	public Boolean existsFile( String path ) {
@@ -312,9 +330,9 @@ public class FTPConnection {
 
 	/**
 	 * Check if a directory exists on the FTP server
-	 * 
+	 *
 	 * @param dirName The name of the directory you want to check
-	 * 
+	 *
 	 * @return Boolean
 	 */
 	public Boolean existsDir( String dirName ) throws IOException {
@@ -336,7 +354,7 @@ public class FTPConnection {
 
 	/**
 	 * Remove a directory on the FTP server
-	 * 
+	 *
 	 * @param dirName The name of the directory you want to remove
 	 */
 	public void removeDir( String dirName ) {
@@ -389,9 +407,9 @@ public class FTPConnection {
 
 	/**
 	 * Convert an FTPFile object to a struct
-	 * 
+	 *
 	 * @param file The FTPFile object to convert
-	 * 
+	 *
 	 * @return IStruct
 	 */
 	public static IStruct FTPFileToStruct( FTPFile file ) {
@@ -411,9 +429,9 @@ public class FTPConnection {
 
 	/**
 	 * Get the mode of the file
-	 * 
+	 *
 	 * @param file
-	 * 
+	 *
 	 * @return
 	 */
 	public static String getMode( FTPFile file ) {
@@ -423,9 +441,9 @@ public class FTPConnection {
 
 	/**
 	 * Get the raw representation of the file meta data
-	 * 
+	 *
 	 * @param file
-	 * 
+	 *
 	 * @return
 	 */
 	public static String getRaw( FTPFile file ) {
@@ -435,9 +453,9 @@ public class FTPConnection {
 
 	/**
 	 * Get the type of the file
-	 * 
+	 *
 	 * @param file
-	 * 
+	 *
 	 * @return
 	 */
 	public static String getType( FTPFile file ) {
