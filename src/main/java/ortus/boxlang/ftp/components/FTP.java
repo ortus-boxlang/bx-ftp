@@ -77,20 +77,49 @@ public class FTP extends Component {
 	public FTP() {
 		super();
 		declaredAttributes	= new Attribute[] {
+		    // The action to perform
 		    new Attribute( Key.action, "string", Set.of( Validator.REQUIRED, Validator.valueOneOf( VALID_ACTIONS ) ) ),
-		    new Attribute( Key._name, "string" ),
+		    // Name of the variable to store the result, if not passed, the result will be stored in a variable named 'bxftp'
+		    new Attribute( Key.result, "string" ),
+		    // Connection Attributes
+		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) ),
+		    new Attribute( Key.server, "string" ),
+		    new Attribute( Key.port, "numeric", FTPConnection.DEFAULT_PORT ),
 		    new Attribute( Key.username, "string" ),
 		    new Attribute( Key.password, "string" ),
-		    new Attribute( Key.port, "numeric", 21 ),
-		    new Attribute( Key.server, "string" ),
-		    new Attribute( Key.item, "string" ),
-		    new Attribute( FTPKeys._new, "string" ),
 		    new Attribute( FTPKeys.stopOnError, "boolean" ),
-		    new Attribute( FTPKeys.passive, "boolean", false ),
-		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) ),
+		    new Attribute( FTPKeys.passive, "boolean", FTPConnection.DEFAULT_PASSIVE ),
+		    new Attribute( FTPKeys.timeout, "numeric" ),
+
+		    // Directory on which to performan an operation. Required for actions: changeDir, createDir, listDir, existsDir
+		    new Attribute( Key.directory, "string" ),
+
+		    // The target file/directory. Required for actions: exists, remove
+		    new Attribute( Key.item, "string" ),
+
+		    // Query variable name when doing variable operations. Required for actions: listDir
+		    new Attribute( Key._name, "string" ),
+
+		    // New name of the file/directory on the remote server. Required for actions: rename
+		    new Attribute( FTPKeys._new, "string" ),
+		    // The name of the file on the remote server. Required for actions: getFile, putFile, existsFile
 		    new Attribute( FTPKeys.remoteFile, "string" ),
+		    // Name of the file on the local file system. Required for actions: getFile, putFile
 		    new Attribute( FTPKeys.localFile, "string" ),
-		    new Attribute( FTPKeys.timeout, "numeric", 30 )
+
+			// Pending Attributes, not sure if we need to do them.
+			// ASCIIExtensionList - Delimited list of file extensions that force ASCII transfer mode, if transferMode = "auto".
+			// existing - Current name of the file/directory on the remote server. Required for action = rename
+			// failIfExists (true) - If a local file with same name exists, should it be overwritten with action = getFile. Default is true
+			// proxyServer - name of the proxy server to use
+			// systemType - windows or unix
+			// transferMode - auto, ascii, binary
+			// retrycount (1) - Number of times to retry an operation
+			// passphrase - passphrase for private key
+			// key - absolute path to private key file
+			// fingerprint - fingerprint of the server's public key
+			// bufferSize - Buffer sie in bytes
+			// secure (false) - FTP or SFTP if true
 		};
 		this.logger			= ftpService.getLogger();
 	}
@@ -137,15 +166,14 @@ public class FTP extends Component {
 	 *
 	 */
 	public BodyResult _invoke( IBoxContext context, IStruct attributes, ComponentBody body, IStruct executionState ) {
-		FTPConnection	ftpConnection		= findOrInitializeConnection( context, attributes );
-		FTPResult		ftpResult			= new FTPResult( ftpConnection );
-		String			action				= StringCaster.cast( attributes.get( Key.action ) ).toLowerCase();
-		Boolean			stopOnErrorValue	= attributes.containsKey( FTPKeys.stopOnError ) ? BooleanCaster.cast( attributes.get( FTPKeys.stopOnError ) )
-		    : false;
-		Object			returnValue			= null;
+		FTPConnection	ftpConnection	= findOrInitializeConnection( context, attributes );
+		FTPResult		ftpResult		= new FTPResult( ftpConnection );
+		String			action			= attributes.getAsString( Key.action ).toLowerCase();
+		Object			returnValue		= null;
 
-		if ( stopOnErrorValue != false ) {
-			ftpConnection.setStopOnError( stopOnErrorValue );
+		// Some flags to set in the connection for operation if they are present
+		if ( attributes.containsKey( FTPKeys.stopOnError ) ) {
+			ftpConnection.setStopOnError( attributes.getAsBoolean( FTPKeys.stopOnError ) );
 		}
 
 		// Announce the FTP Action event
@@ -236,8 +264,8 @@ public class FTP extends Component {
 			}
 
 			// Either assign a 'result' variable or return the result as a 'bxftp' variable
-			if ( attributes.containsKey( Key.result ) && attributes.get( Key.result ) instanceof String s ) {
-				context.getDefaultAssignmentScope().put( Key.of( s ), ftpResult.toStruct() );
+			if ( attributes.get( Key.result ) instanceof String targetResult && !targetResult.isBlank() ) {
+				context.getDefaultAssignmentScope().put( Key.of( targetResult ), ftpResult.toStruct() );
 			} else {
 				context.getDefaultAssignmentScope().put( FTPKeys.bxftp, ftpResult.toStruct() );
 			}
