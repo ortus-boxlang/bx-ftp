@@ -13,7 +13,7 @@ env:
 
 jobs:
   tests:
-    name: Tests ${{ github.event.repository.name }}
+    name: Tests Mode ${{ matrix.ftpMode }}
     runs-on: ${{ matrix.os }}
     env:
       DB_USER: root
@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ "ubuntu-latest" ]
         jdkVersion: [ "21" ]
-        experimental: [false]
+        experimental: [ false ]
         ftpMode: [ "active", "passive" ]
         #include:
           #- jdkVersion: "17"
@@ -68,6 +68,9 @@ jobs:
 
           echo "Copying ./src/test/resources/.env.example"
           sudo cp ./src/test/resources/.env.example ./src/test/resources/.env
+
+          printf "Listing FTP Files\n"
+          ls -lR $hdir
 
       # - name: Setup Database and Fixtures
       #   run: |
