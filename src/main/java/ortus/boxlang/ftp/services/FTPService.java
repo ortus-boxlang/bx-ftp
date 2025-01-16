@@ -123,7 +123,7 @@ public class FTPService extends BaseService {
 	 * @return The FTPConnection that was found or created
 	 */
 	public FTPConnection getOrBuildConnection( Key name ) {
-		return this.ftpConnections.computeIfAbsent( name, key -> new FTPConnection( name ) );
+		return this.ftpConnections.computeIfAbsent( name, key -> new FTPConnection( name, getLogger() ) );
 	}
 
 	/**
