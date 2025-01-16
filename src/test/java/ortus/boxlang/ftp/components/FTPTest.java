@@ -332,7 +332,7 @@ public class FTPTest extends BaseIntegrationTest {
 		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
 	}
 
-	@DisplayName( "It can close the connection" )
+	@DisplayName( "It can close an opened connection" )
 	@Test
 	public void testCloseConnection() {
 		// @formatter:off
@@ -366,6 +366,30 @@ public class FTPTest extends BaseIntegrationTest {
 		assertThat(
 		    variables.getAsBoolean( Key.of( "isOpen" ) )
 		).isFalse();
+	}
+
+	@DisplayName( "It can ignore a closed or non-existed connection when closing" )
+	@Test
+	public void testCloseConnectionIgnore() {
+		// @formatter:off
+		runtime.executeSource(
+			"""
+				<bx:ftp
+					action="close"
+					connection="bogus"
+					result="myResult"/>
+				<bx:script>
+					println( bogus );
+					isOpen = bogus.isConnected();
+				</bx:script>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( variables.getAsBoolean( Key.of( "isOpen" ) ) ).isFalse();
 	}
 
 	@DisplayName( "It can change the working directory" )

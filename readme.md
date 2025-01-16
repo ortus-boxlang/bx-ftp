@@ -47,36 +47,122 @@ bx:ftp action="putfile" connection="myConnection" localFile="/path/to/local/file
 bx:ftp action="close" connection="myConnection";
 ```
 
-### Available Actions
+Please note that the `connection` attribute is required for all actions, as it is the reference to the connection that you have opened and BoxLang will track for you in the `FTPService` service that's also registered in the runtime as a global service.
 
-The available actions for the `bx:ftp` component are:
+## Available Actions
 
-#### Connection Actions
+All actions can use a `result` attribute to store the result of the action in a variable, if not a variable called `bxftp` will be used (In CFML compat mode it will be `cftp`).
 
-- `open` - Open a connection to an FTP server
-- `close` - Close a connection to an FTP server
+The result will be a struct with the following keys:
 
-#### Directory Actions
+- `statusCode` - The status code of the action (integer)
+- `statusText` - The status text of the action (string)
+- `returnValue` - The return value of the action (if any)
+- `succeeded` - Whether the action was successful (boolean)
 
-- `changeDir` - Change the current directory
-- `createDir` - Create a directory
-- `existsDir` - Check if a directory exists
-- `getCurrentDir` - Get the current directory
-- `listDir` - List the contents of a directory
-- `removeDir` - Remove a directory
-- `renameDir` - Rename a directory
+### Connection Actions
 
-#### File Actions
+### `open`
 
-- `removeFile` - Remove a file
-- `renameFile` - Rename a file
-- `putfile` - Upload a file
-- `getfile` - Download a file
-- `existsFile` - Check if a file exists
+Open a connection to an FTP server.  The available attributes are:
+
+- `connection` - The name of the connection to use and track in the `FTPService` service
+- `server` - The server ip or hostname to connect to
+- `port` - The port to connect to (default is 21)
+- `username` - The username to use for authentication
+- `password` - The password to use for authentication
+- `timeout` - The timeout for the connection (default is 30 seconds)
+- `secure` - Whether to use a secure connection (default is `false`)
+- `passive` - Whether to use passive mode (default is `true`)
+
+### `close`
+
+Close a connection to an FTP server. The available attributes are:
+
+- `connection` - The name of the connection to close
+
+### Directory Actions
+
+## `changeDir`
+
+Change the current directory.  The available attributes are:
+
+- `directory` - The directory to change to
+
+## `createDir`
+
+Create a directory. The available attributes are:
+
+- `directory` - The directory to create
+
+## `existsDir`
+
+Check if a directory exists. The available attributes are:
+
+- `directory` - The directory to check
+
+## `getCurrentDir`
+
+Get the current working directory of the connection.  No attributes are required.
+
+## `listDir`
+
+List the contents of a directory. The available attributes are:
+
+- `directory` - The directory to list
+- `name` - The name of the variable to store the results in as a query
+
+## `removeDir`
+
+Remove a directory. The available attributes are:
+
+- `directory` - The directory to remove
+
+## `renameDir`
+
+Rename a directory.  The available attributes are:
+
+- `existing` - The directory to rename
+- `new` - The new name of the directory
+
+### File Actions
+
+## `removeFile`
+
+Remove a file. The available attributes are:
+
+- `item` - The file to remove
+
+## `renameFile`
+
+Rename a file. The available attributes are:
+
+- `existing` - The directory to rename
+- `new` - The new name of the directory
+
+## `putfile`
+
+Upload a file. The available attributes are:
+
+- `localFile` - The local file to upload
+- `remoteFile` - The remote file to upload to
+
+## `getfile`
+
+Download a file. The available attributes are:
+
+- `localFile` - The local file to download to
+- `remoteFile` - The remote file to download
+
+## `existsFile`
+
+Check if a file exists. The available attributes are:
+
+- `remoteFile` - The file to check for existence
 
 ## CFML Compatibility
 
-This module will require the `bx-cfml-compat` module if you want it to work like Adobe/Lucee in your CFML applications.  That's it!
+This module will require the `bx-cfml-compat` module if you want it to work like Adobe/Lucee in your CFML applications.  Enjoy!
 
 ## Ortus Sponsors
 
