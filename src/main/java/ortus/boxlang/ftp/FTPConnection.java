@@ -154,6 +154,14 @@ public class FTPConnection {
 		return this;
 	}
 
+	/**
+	 * Retrieve a file from the FTP server and write it out to a local file.
+	 * 
+	 * @param remoteFile The name of the file to copy
+	 * @param localFile  The path of hte file to save
+	 * 
+	 * @throws IOException
+	 */
 	public void getFile( String remoteFile, String localFile ) throws IOException {
 		java.io.File file = new java.io.File( localFile );
 		if ( file.exists() ) {
@@ -165,6 +173,14 @@ public class FTPConnection {
 		this.handleError();
 	}
 
+	/**
+	 * Put a file on the remote server
+	 * 
+	 * @param localFile  The file path of the local file you want to copy
+	 * @param remoteFile The name of the remote file you want to create/update
+	 * 
+	 * @throws IOException
+	 */
 	public void putFile( String localFile, String remoteFile ) throws IOException {
 		java.io.File file = new java.io.File( localFile );
 		if ( !file.exists() ) {
@@ -176,6 +192,11 @@ public class FTPConnection {
 		this.handleError();
 	}
 
+	/**
+	 * Remove a file on the FTP server
+	 * 
+	 * @param remoteFile The name of the file you want to remove
+	 */
 	public void remove( String remoteFile ) {
 
 		try {
@@ -186,30 +207,67 @@ public class FTPConnection {
 		this.handleError();
 	}
 
+	/**
+	 * Return the most recent reply code from the FTP Server
+	 * 
+	 * @return
+	 */
 	public int getStatusCode() {
 		return client.getReplyCode();
 	}
 
+	/**
+	 * Get the status text associated with the most recent reply from the FTP server
+	 * 
+	 * @return
+	 */
 	public String getStatusText() {
 		return client.getReplyString();
 	}
 
+	/**
+	 * Get the current selected working directory on the FTP server.
+	 * 
+	 * @return String
+	 */
 	public String getWorkingDirectory() throws IOException {
 		return client.printWorkingDirectory();
 	}
 
+	/**
+	 * Change the working directory on the FTP server
+	 * 
+	 * @param dirName The name of the folder/path you want to cd into
+	 * 
+	 * @throws IOException
+	 */
 	public void changeDir( String dirName ) throws IOException {
 		client.changeWorkingDirectory( dirName );
 	}
 
+	/**
+	 * Close the connection to the FTP server
+	 * 
+	 * @throws IOException
+	 */
 	public void close() throws IOException {
 		client.logout();
 	}
 
+	/**
+	 * Set the stopOnError flag
+	 * 
+	 * @param stopOnError
+	 */
 	public void setStopOnError( boolean stopOnError ) {
 		this.stopOnError = stopOnError;
 	}
 
+	/**
+	 * Create a directory on the FTP server
+	 * 
+	 * @param dirName The name of the directory you want to create
+	 */
 	public void createDir( String dirName ) {
 		try {
 			client.makeDirectory( dirName );
@@ -221,6 +279,13 @@ public class FTPConnection {
 		}
 	}
 
+	/**
+	 * Check if a file exists on the FTP server
+	 * 
+	 * @param path The path to the file you want to check
+	 * 
+	 * @return Boolean
+	 */
 	public Boolean existsFile( String path ) {
 
 		if ( path.equals( "/" ) ) {
@@ -245,6 +310,13 @@ public class FTPConnection {
 		return false;
 	}
 
+	/**
+	 * Check if a directory exists on the FTP server
+	 * 
+	 * @param dirName The name of the directory you want to check
+	 * 
+	 * @return Boolean
+	 */
 	public Boolean existsDir( String dirName ) throws IOException {
 		String	pwd		= null;
 		Boolean	result	= null;
@@ -262,6 +334,11 @@ public class FTPConnection {
 		}
 	}
 
+	/**
+	 * Remove a directory on the FTP server
+	 * 
+	 * @param dirName The name of the directory you want to remove
+	 */
 	public void removeDir( String dirName ) {
 		try {
 			client.removeDirectory( dirName );
@@ -310,6 +387,13 @@ public class FTPConnection {
 		return result;
 	}
 
+	/**
+	 * Convert an FTPFile object to a struct
+	 * 
+	 * @param file The FTPFile object to convert
+	 * 
+	 * @return IStruct
+	 */
 	public static IStruct FTPFileToStruct( FTPFile file ) {
 		return Struct.of(
 		    Key._name, file.getName(),
@@ -325,16 +409,37 @@ public class FTPConnection {
 		);
 	}
 
+	/**
+	 * Get the mode of the file
+	 * 
+	 * @param file
+	 * 
+	 * @return
+	 */
 	public static String getMode( FTPFile file ) {
 		// TODO complete mode representation
 		return "000";
 	}
 
+	/**
+	 * Get the raw representation of the file meta data
+	 * 
+	 * @param file
+	 * 
+	 * @return
+	 */
 	public static String getRaw( FTPFile file ) {
 		// TODO complete mode representation: 'drwxrwxrwx 1 0 0 4096 Oct 29 02:54 a sub folder'
 		return "drwxrwxrwx 1 0 0 4096 Oct 29 02:54 a sub folder";
 	}
 
+	/**
+	 * Get the type of the file
+	 * 
+	 * @param file
+	 * 
+	 * @return
+	 */
 	public static String getType( FTPFile file ) {
 		return switch ( file.getType() ) {
 			case 0 -> "file";

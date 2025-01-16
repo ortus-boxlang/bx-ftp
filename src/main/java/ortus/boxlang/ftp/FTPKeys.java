@@ -19,6 +19,9 @@ package ortus.boxlang.ftp;
 
 import ortus.boxlang.runtime.scopes.Key;
 
+/**
+ * Keys for the FTP module.
+ */
 public class FTPKeys {
 
 	public static final Key	_new					= Key.of( "new" );
@@ -41,4 +44,5 @@ public class FTPKeys {
 	public static final Key	onFTPConnectionClose	= Key.of( "onFTPConnectionClose" );
 	public static final Key	afterFTPCall			= Key.of( "afterFTPCall" );
 	public static final Key	beforeFTPCall			= Key.of( "beforeFTPCall" );
+	public static final Key	postFTPCall				= Key.of( "postFTPCall" );
 }
