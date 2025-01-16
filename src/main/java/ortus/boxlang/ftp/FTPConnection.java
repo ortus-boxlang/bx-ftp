@@ -218,14 +218,15 @@ public class FTPConnection {
 	 * Remove a file on the FTP server
 	 *
 	 * @param remoteFile The name of the file you want to remove
+	 *
+	 * @return True if the file was removed, false otherwise
 	 */
-	public void remove( String remoteFile ) {
+	public boolean remove( String remoteFile ) {
 		try {
-			client.deleteFile( remoteFile );
+			return client.deleteFile( remoteFile );
 		} catch ( IOException e ) {
-			this.handleError();
+			throw new BoxIOException( e );
 		}
-		this.handleError();
 	}
 
 	/**
@@ -321,6 +322,22 @@ public class FTPConnection {
 	}
 
 	/**
+	 * Rename a file or diretory on the FTP server
+	 *
+	 * @param existing The name of the file/directory you want to rename
+	 * @param newName  The new name of the file/directory
+	 *
+	 * @return If the rename was successful or not
+	 */
+	public Boolean rename( String existing, String newName ) {
+		try {
+			return client.rename( existing, newName );
+		} catch ( IOException e ) {
+			throw new BoxIOException( e );
+		}
+	}
+
+	/**
 	 * Check if a file exists on the FTP server
 	 *
 	 * @param path The path to the file you want to check
@@ -377,14 +394,14 @@ public class FTPConnection {
 	 * Remove a directory on the FTP server
 	 *
 	 * @param dirName The name of the directory you want to remove
+	 *
+	 * @return True if the directory was removed, false otherwise
 	 */
-	public void removeDir( String dirName ) {
+	public boolean removeDir( String dirName ) {
 		try {
-			client.removeDirectory( dirName );
-
-			this.handleError();
+			return client.removeDirectory( dirName );
 		} catch ( IOException e ) {
-			this.handleError();
+			throw new BoxIOException( e );
 		}
 	}
 

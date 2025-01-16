@@ -30,6 +30,7 @@ public class FTPKeys {
 	public static final Key	directory				= Key.of( "directory" );
 	public static final Key	FTPService				= Key.of( "ftpService" );
 	public static final Key	isDirectory				= Key.of( "isDirectory" );
+	public static final Key	existing				= Key.of( "existing" );
 	public static final Key	lastModified			= Key.of( "lastModified" );
 	public static final Key	localFile				= Key.of( "localFile" );
 	public static final Key	passive					= Key.of( "passive" );

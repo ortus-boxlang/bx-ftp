@@ -68,7 +68,10 @@ public class FTP extends Component {
 	    "open",
 	    "putfile",
 	    "removeDir",
-	    "remove"
+	    "remove",
+	    "removeFile",
+	    "renameFile",
+	    "renameDir"
 	};
 
 	/**
@@ -106,10 +109,11 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys.remoteFile, "string" ),
 		    // Name of the file on the local file system. Required for actions: getFile, putFile
 		    new Attribute( FTPKeys.localFile, "string" ),
+		    // The existing file to rename. Required for actions: renameFile
+		    new Attribute( FTPKeys.existing, "string" )
 
 			// Pending Attributes, not sure if we need to do them.
 			// ASCIIExtensionList - Delimited list of file extensions that force ASCII transfer mode, if transferMode = "auto".
-			// existing - Current name of the file/directory on the remote server. Required for action = rename
 			// failIfExists (true) - If a local file with same name exists, should it be overwritten with action = getFile. Default is true
 			// proxyServer - name of the proxy server to use
 			// systemType - windows or unix
@@ -129,18 +133,20 @@ public class FTP extends Component {
 	 * <p>
 	 * The available actions are:
 	 * <ul>
-	 * <li>changedir</li>
-	 * <li>close</li>
+	 * <li>changeDir</li>
 	 * <li>createDir</li>
+	 * <li>close</li>
+	 * <li>open</li>
 	 * <li>existsDir</li>
 	 * <li>existsFile</li>
 	 * <li>getCurrentDir</li>
 	 * <li>getfile</li>
-	 * <li>listdir</li>
-	 * <li>open</li>
-	 * <li>putfile</li>
+	 * <li>listDir</li>
+	 * <li>putFile</li>
 	 * <li>removeDir</li>
-	 * <li>remove</li>
+	 * <li>removeFile</li>
+	 * <li>renameFile</li>
+	 * <li>renameDir</li>
 	 * </ul>
 	 *
 	 * <h2>Examples:</h2>
@@ -223,7 +229,7 @@ public class FTP extends Component {
 					ftpConnection.createDir( StringCaster.cast( attributes.get( FTPKeys._new ) ) );
 					break;
 				case "removedir" :
-					ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
+					returnValue = ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
 					break;
 				case "listdir" :
 					Query files = ftpConnection
@@ -241,12 +247,18 @@ public class FTP extends Component {
 				// File Actions
 				case "getfile" :
 					ftpConnection.getFile(
-					    StringCaster.cast( attributes.get( FTPKeys.remoteFile ) ),
-					    StringCaster.cast( attributes.get( FTPKeys.localFile ) )
+					    attributes.getAsString( FTPKeys.remoteFile ),
+					    attributes.getAsString( FTPKeys.localFile )
 					);
 					break;
-				case "remove" :
-					ftpConnection.remove( StringCaster.cast( attributes.get( Key.item ) ) );
+				case "renameFile", "renameDir" :
+					returnValue = ftpConnection.rename(
+					    attributes.getAsString( FTPKeys.existing ),
+					    attributes.getAsString( FTPKeys._new )
+					);
+					break;
+				case "remove", "removeFile" :
+					returnValue = ftpConnection.remove( attributes.getAsString( Key.item ) );
 					break;
 				case "existsfile" :
 					returnValue = ftpConnection.existsFile( StringCaster.cast( attributes.get( FTPKeys.remoteFile ) ) );

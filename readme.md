@@ -37,7 +37,42 @@ bx:ftp action="open" connection="myConnection" server="ftp.example.com" username
 // List the contents of a directory
 bx:ftp action="listdir" connection="myConnection" directory="/" name="results";
 
+// Download a file
+bx:ftp action="getfile" connection="myConnection" remoteFile="/path/to/remote/file.txt" localFile="/path/to/local/file.txt";
+
+// Upload a file
+bx:ftp action="putfile" connection="myConnection" localFile="/path/to/local/file.txt" remoteFile="/path/to/remote/file.txt";
+
+// Close the connection
+bx:ftp action="close" connection="myConnection";
 ```
+
+### Available Actions
+
+The available actions for the `bx:ftp` component are:
+
+#### Connection Actions
+
+- `open` - Open a connection to an FTP server
+- `close` - Close a connection to an FTP server
+
+#### Directory Actions
+
+- `changeDir` - Change the current directory
+- `createDir` - Create a directory
+- `existsDir` - Check if a directory exists
+- `getCurrentDir` - Get the current directory
+- `listDir` - List the contents of a directory
+- `removeDir` - Remove a directory
+- `renameDir` - Rename a directory
+
+#### File Actions
+
+- `removeFile` - Remove a file
+- `renameFile` - Rename a file
+- `putfile` - Upload a file
+- `getfile` - Download a file
+- `existsFile` - Check if a file exists
 
 ## CFML Compatibility
 
