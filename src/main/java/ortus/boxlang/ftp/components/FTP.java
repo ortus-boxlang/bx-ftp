@@ -189,6 +189,7 @@ public class FTP extends Component {
 
 		try {
 			switch ( action.toLowerCase() ) {
+				// Connection Actions
 				case "open" :
 					runtime.announce(
 					    FTPKeys.onFTPConnectionOpen,
@@ -213,12 +214,31 @@ public class FTP extends Component {
 					);
 					ftpConnection.close();
 					break;
+
+				// Directory Actions
 				case "changedir" :
 					ftpConnection.changeDir( StringCaster.cast( attributes.get( Key.directory ) ) );
 					break;
 				case "createdir" :
 					ftpConnection.createDir( StringCaster.cast( attributes.get( FTPKeys._new ) ) );
 					break;
+				case "removedir" :
+					ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
+					break;
+				case "listdir" :
+					Query files = ftpConnection
+					    .changeDir( attributes.getAsString( Key.directory ) )
+					    .listdir();
+					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
+					break;
+				case "getcurrentdir" :
+					returnValue = ftpConnection.getWorkingDirectory();
+					break;
+				case "existsdir" :
+					returnValue = ftpConnection.existsDir( StringCaster.cast( attributes.get( FTPKeys.directory ) ) );
+					break;
+
+				// File Actions
 				case "getfile" :
 					ftpConnection.getFile(
 					    StringCaster.cast( attributes.get( FTPKeys.remoteFile ) ),
@@ -228,24 +248,10 @@ public class FTP extends Component {
 				case "remove" :
 					ftpConnection.remove( StringCaster.cast( attributes.get( Key.item ) ) );
 					break;
-				case "removedir" :
-					ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
-					break;
-				case "listdir" :
-					Query files = ftpConnection.listdir();
-					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
-					break;
-				case "getcurrentdir" :
-					returnValue = ftpConnection.getWorkingDirectory();
-					break;
 				case "existsfile" :
 					returnValue = ftpConnection.existsFile( StringCaster.cast( attributes.get( FTPKeys.remoteFile ) ) );
 					break;
-				case "existsdir" :
-					returnValue = ftpConnection.existsDir( StringCaster.cast( attributes.get( FTPKeys.directory ) ) );
-					break;
 				case "putfile" :
-					// TODO: event onFTPPutFile
 					ftpConnection.putFile(
 					    StringCaster.cast( attributes.get( FTPKeys.localFile ) ),
 					    StringCaster.cast( attributes.get( FTPKeys.remoteFile ) )

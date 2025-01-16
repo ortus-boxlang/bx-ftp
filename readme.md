@@ -24,9 +24,24 @@ If there are any issues, please report them to the [BoxLang JIRA](https://ortuss
 
 ## Settings
 
-## BIFS
+As of this version, there are no configurable settings for this module.
 
 ## Usage
+
+You will use the `ftp` component in your BoxLang application by leveraging the `bx:ftp` component call, whether you are in script or in the templating language.
+
+```java
+// Connect to an FTP server
+bx:ftp action="open" connection="myConnection" server="ftp.example.com" username="myuser" password="mypass";
+
+// List the contents of a directory
+bx:ftp action="listdir" connection="myConnection" directory="/" name="results";
+
+```
+
+## CFML Compatibility
+
+This module will require the `bx-cfml-compat` module if you want it to work like Adobe/Lucee in your CFML applications.  That's it!
 
 ## Ortus Sponsors
 

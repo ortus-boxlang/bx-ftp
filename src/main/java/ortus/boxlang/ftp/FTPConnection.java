@@ -262,8 +262,9 @@ public class FTPConnection {
 	 *
 	 * @throws IOException
 	 */
-	public void changeDir( String dirName ) throws IOException {
+	public FTPConnection changeDir( String dirName ) throws IOException {
 		client.changeWorkingDirectory( dirName );
+		return this;
 	}
 
 	/**
@@ -400,12 +401,18 @@ public class FTPConnection {
 		return this;
 	}
 
+	/**
+	 * List the contents of the current directory
+	 *
+	 * @return Query The contents of the directory
+	 *
+	 * @throws IOException
+	 */
 	public Query listdir() throws IOException {
 		FTPFile[] files = client.listFiles();
 
 		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) ) {
-			client.disconnect();
-			throw new BoxRuntimeException( "FTP error: " + client.getReplyCode() );
+			throw new BoxRuntimeException( "FTP error listing a directory: " + client.getReplyCode() );
 		}
 
 		Query result = new Query();
