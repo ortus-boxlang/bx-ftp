@@ -31,6 +31,9 @@ public class FTPKeys {
 	public static final Key	FTPService				= Key.of( "ftpService" );
 	public static final Key	isDirectory				= Key.of( "isDirectory" );
 	public static final Key	existing				= Key.of( "existing" );
+	public static final Key	isReadable				= Key.of( "isReadable" );
+	public static final Key	isWritable				= Key.of( "isWritable" );
+	public static final Key	isExecutable			= Key.of( "isExecutable" );
 	public static final Key	lastModified			= Key.of( "lastModified" );
 	public static final Key	localFile				= Key.of( "localFile" );
 	public static final Key	passive					= Key.of( "passive" );

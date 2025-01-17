@@ -75,11 +75,26 @@ Open a connection to an FTP server.  The available attributes are:
 - `secure` - Whether to use a secure connection (default is `false`)
 - `passive` - Whether to use passive mode (default is `true`)
 
+```java
+// Connect to an FTP server
+bx:ftp
+	action="open"
+	connection="myConnection"
+	server="ftp.example.com"
+	username="myuser"
+	assword="mypass";
+```
+
 ### `close`
 
 Close a connection to an FTP server. The available attributes are:
 
 - `connection` - The name of the connection to close
+
+```java
+// Close the connection
+bx:ftp action="close" connection="myConnection"
+```
 
 ### Directory Actions
 
@@ -89,11 +104,26 @@ Change the current directory.  The available attributes are:
 
 - `directory` - The directory to change to
 
+```java
+// Change the current directory
+bx:ftp action="changedir" connection="myConnection" directory="/path/to/new/directory";
+```
+
+No result is returned from this action.
+
 ## `createDir`
 
 Create a directory. The available attributes are:
 
 - `directory` - The directory to create
+
+```java
+// Create a directory
+bx:ftp action="createdir" connection="myConnection" directory="/path/to/new/directory" result="ftpResult";
+assert ftpResult.returnValue == true;
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the directory was created or not.
 
 ## `existsDir`
 
@@ -101,16 +131,63 @@ Check if a directory exists. The available attributes are:
 
 - `directory` - The directory to check
 
+```java
+// Check if a directory exists
+bx:ftp action="existsdir" connection="myConnection" directory="/path/to/directory" result="ftpResult";
+assert ftpResult.returnValue == true;
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the directory was created or not.
+
 ## `getCurrentDir`
 
 Get the current working directory of the connection.  No attributes are required.
+
+```java
+// Get the current working directory
+bx:ftp action="getcurrentdir" connection="myConnection" result="ftpResult";
+assert ftpResult.returnValue == "/path/to/current/directory";
+```
+
+If you use the result object, the `returnValue` key will have the current working directory.
 
 ## `listDir`
 
 List the contents of a directory. The available attributes are:
 
 - `directory` - The directory to list
-- `name` - The name of the variable to store the results in as a query
+- `name` - The name of the variable to store the results in as a query. If not used, the result will be stored in the `returnValue` key of the result object.
+- `returnType` - The type of the return value (default is `query`, or `array`)
+
+```java
+// List the contents of a directory
+bx:ftp action="listdir" connection="myConnection" directory="/" name="results";
+
+// List and place the result object
+bx:ftp action="listdir" connection="myConnection" directory="/" result="ftpResult";
+assert ftpResult.returnValue.recordCount == 5;
+
+// List as an array of structs
+bx:ftp action="listdir" connection="myConnection" directory="/" name="results" returnType="array";
+assert results.len() == 5;
+```
+
+The available columns in the query are:
+
+- `name` - The name of the file or directory
+- `isDirectory` - Whether the item is a directory (boolean)
+- `lastModified` - The last modified date of the item
+- `size` - The size of the item in bytes (aliased as length for CFML compatibility)
+- `mode` - The mode of the item
+- `path` - File path (without drive designation) of the current element.
+- `url` - Complete URL for the current element (file or directory).
+- `type` - The type of the item (file, directory, symbolic link, unknown)
+- `raw` - The raw representation of the item listing
+- `attributes` - The attributes of the item
+- `isReadable` - Whether the item is readable
+- `isWritable` - Whether the item is writable
+- `isExecutable` - Whether the item is executable
+
 
 ## `removeDir`
 

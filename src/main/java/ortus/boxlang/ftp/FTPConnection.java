@@ -28,14 +28,17 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
+import ortus.boxlang.runtime.dynamic.casters.DateTimeCaster;
 import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
+import ortus.boxlang.runtime.types.Array;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
 import ortus.boxlang.runtime.types.QueryColumnType;
 import ortus.boxlang.runtime.types.Struct;
 import ortus.boxlang.runtime.types.exceptions.BoxIOException;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
+import ortus.boxlang.runtime.types.util.BLCollector;
 
 /**
  * This class is a wrapper around the Apache Commons Net FTPClient class. It
@@ -57,6 +60,12 @@ public class FTPConnection {
 	// In Seconds
 	public static final Duration	DEFAULT_TIMEOUT			= Duration.ofSeconds( 30 );
 
+	// Enum for return types: query and array
+	public enum ReturnType {
+		QUERY,
+		ARRAY
+	}
+
 	/**
 	 * --------------------------------------------------------------------------
 	 * Properties
@@ -66,28 +75,28 @@ public class FTPConnection {
 	/**
 	 * The FTPClient object used to communicate with the server.
 	 */
-	private FTPClient				client					= new FTPClient();
+	private FTPClient		client		= new FTPClient();
 
 	/**
 	 * If true, an exception will be thrown if an error occurs. If false, the
 	 * error will be ignored.
 	 */
-	private boolean					stopOnError				= DEFAULT_STOP_ON_ERROR;
+	private boolean			stopOnError	= DEFAULT_STOP_ON_ERROR;
 
 	/**
 	 * The name of the connection.
 	 */
-	private Key						name;
+	private Key				name;
 
 	/**
 	 * The username for the connection.
 	 */
-	private String					username;
+	private String			username;
 
 	/**
 	 * The BoxLang logger to use
 	 */
-	private BoxLangLogger			logger;
+	private BoxLangLogger	logger;
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -250,7 +259,7 @@ public class FTPConnection {
 	/**
 	 * Get the current selected working directory on the FTP server.
 	 *
-	 * @return String
+	 * @return The current working directory
 	 */
 	public String getWorkingDirectory() throws IOException {
 		return client.printWorkingDirectory();
@@ -261,7 +270,7 @@ public class FTPConnection {
 	 *
 	 * @param dirName The name of the folder/path you want to cd into
 	 *
-	 * @throws IOException
+	 * @return FTPConnection for chaining
 	 */
 	public FTPConnection changeDir( String dirName ) throws IOException {
 		client.changeWorkingDirectory( dirName );
@@ -310,15 +319,15 @@ public class FTPConnection {
 	 * Create a directory on the FTP server
 	 *
 	 * @param dirName The name of the directory you want to create
+	 *
+	 * @return If the directory was created or not
 	 */
-	public FTPConnection createDir( String dirName ) {
+	public boolean createDir( String dirName ) {
 		try {
-			client.makeDirectory( dirName );
-			this.handleError();
+			return client.makeDirectory( dirName );
 		} catch ( IOException e ) {
-			e.printStackTrace();
+			throw new BoxIOException( e );
 		}
-		return this;
 	}
 
 	/**
@@ -421,97 +430,39 @@ public class FTPConnection {
 	/**
 	 * List the contents of the current directory
 	 *
-	 * @return Query The contents of the directory
+	 * @param returnType The return type of the listing
 	 *
-	 * @throws IOException
+	 * @throws BoxRuntimeException If an error occurs while listing the directory
+	 *
+	 * @return The contents of the directory as a Query or an Array of Structs
 	 */
-	public Query listdir() throws IOException {
-		FTPFile[] files = client.listFiles();
+	public Object listdir( ReturnType returntype ) throws IOException {
+		FTPFile[]	files		= this.client.listFiles();
+		String		systemType	= this.client.getSystemType().toUpperCase();
 
-		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) ) {
-			throw new BoxRuntimeException( "FTP error listing a directory: " + client.getReplyCode() );
+		if ( !FTPReply.isPositiveCompletion( this.client.getReplyCode() ) ) {
+			throw new BoxRuntimeException( "FTP error listing a directory: " + this.client.getReplyCode() );
 		}
 
-		Query result = new Query();
+		if ( returntype == ReturnType.ARRAY ) {
+			return filesToArray( files, systemType );
+		}
+		return filesToQuery( files, systemType );
+	}
 
-		result.addColumn( Key._name, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.isDirectory, QueryColumnType.BIT );
-		result.addColumn( FTPKeys.lastModified, QueryColumnType.TIMESTAMP );
-		result.addColumn( Key.length, QueryColumnType.INTEGER );
-		result.addColumn( Key.mode, QueryColumnType.INTEGER );
-		result.addColumn( Key.path, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.url, QueryColumnType.VARCHAR );
-		result.addColumn( Key.type, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.raw, QueryColumnType.VARCHAR );
-		result.addColumn( Key.attributes, QueryColumnType.VARCHAR );
-
-		Arrays.asList( files )
+	/**
+	 * Convert an array of FTPFile objects to an Array of Structs
+	 *
+	 * @param files      The array of FTPFile objects to convert
+	 * @param systemType The system type of the FTP server
+	 *
+	 * @return A BoxLang Array of Structs containing the files
+	 */
+	public static Array filesToArray( FTPFile[] files, String systemType ) {
+		return Arrays.asList( files )
 		    .stream()
-		    .forEach( ( file ) -> result.add( FTPFileToStruct( file ) ) );
-
-		return result;
-	}
-
-	/**
-	 * Convert an FTPFile object to a struct
-	 *
-	 * @param file The FTPFile object to convert
-	 *
-	 * @return IStruct
-	 */
-	public static IStruct FTPFileToStruct( FTPFile file ) {
-		return Struct.of(
-		    Key._name, file.getName(),
-		    FTPKeys.isDirectory, file.isDirectory(),
-		    FTPKeys.lastModified, file.getTimestamp(),
-		    Key.length, file.getSize(),
-		    Key.mode, getMode( file ),
-		    Key.path, file.getName(),
-		    FTPKeys.url, file.getName(),
-		    Key.type, getType( file ),
-		    FTPKeys.raw, file.getName(),
-		    Key.attributes, file.getName()
-		);
-	}
-
-	/**
-	 * Get the mode of the file
-	 *
-	 * @param file
-	 *
-	 * @return
-	 */
-	public static String getMode( FTPFile file ) {
-		// TODO complete mode representation
-		return "000";
-	}
-
-	/**
-	 * Get the raw representation of the file meta data
-	 *
-	 * @param file
-	 *
-	 * @return
-	 */
-	public static String getRaw( FTPFile file ) {
-		// TODO complete mode representation: 'drwxrwxrwx 1 0 0 4096 Oct 29 02:54 a sub folder'
-		return "drwxrwxrwx 1 0 0 4096 Oct 29 02:54 a sub folder";
-	}
-
-	/**
-	 * Get the type of the file
-	 *
-	 * @param file
-	 *
-	 * @return
-	 */
-	public static String getType( FTPFile file ) {
-		return switch ( file.getType() ) {
-			case 0 -> "file";
-			case 1 -> "directory";
-			case 2 -> "symbolic link";
-			default -> "unknown";
-		};
+		    .map( file -> FTPFileToStruct( file, systemType ) )
+		    .collect( BLCollector.toArray() );
 	}
 
 	/**
@@ -560,5 +511,131 @@ public class FTPConnection {
 	@Override
 	public String toString() {
 		return getMetadata().toString();
+	}
+
+	/**
+	 * --------------------------------------------------------------------------
+	 * Static Helpers
+	 * --------------------------------------------------------------------------
+	 */
+
+	/**
+	 * Convert an array of FTPFile objects to a BoxLang Query
+	 *
+	 * @param files      The array of FTPFile objects to convert
+	 * @param systemType The system type of the FTP server
+	 *
+	 * @return A query object containing the files
+	 */
+	public static Query filesToQuery( FTPFile[] files, String systemType ) {
+		Query result = new Query();
+
+		result.addColumn( Key._name, QueryColumnType.VARCHAR );
+		result.addColumn( FTPKeys.isDirectory, QueryColumnType.BIT );
+		result.addColumn( FTPKeys.lastModified, QueryColumnType.TIMESTAMP );
+		result.addColumn( Key.length, QueryColumnType.INTEGER );
+		result.addColumn( Key.mode, QueryColumnType.INTEGER );
+		result.addColumn( Key.path, QueryColumnType.VARCHAR );
+		result.addColumn( FTPKeys.url, QueryColumnType.VARCHAR );
+		result.addColumn( Key.type, QueryColumnType.VARCHAR );
+		result.addColumn( FTPKeys.raw, QueryColumnType.VARCHAR );
+		result.addColumn( Key.attributes, QueryColumnType.VARCHAR );
+
+		Arrays.asList( files )
+		    .stream()
+		    .forEach( file -> result.add( FTPFileToStruct( file, systemType ) ) );
+
+		return result;
+	}
+
+	/**
+	 * Convert an FTPFile object to a struct
+	 *
+	 * @param file       The FTPFile object to convert
+	 * @param systemType The system type of the FTP server
+	 *
+	 * @return IStruct
+	 *
+	 * @throws IOException
+	 */
+	public static IStruct FTPFileToStruct( FTPFile file, String systemType ) {
+		return Struct.of(
+		    Key._name, file.getName(),
+		    FTPKeys.isDirectory, file.isDirectory(),
+		    FTPKeys.lastModified, DateTimeCaster.cast( file.getTimestamp() ),
+		    // Dumb ACF compatibility
+		    Key.length, file.getSize(),
+		    // End Dumb name
+		    Key.size, file.getSize(),
+		    Key.mode, getMode( file, systemType ),
+		    Key.path, file.getName(),
+		    FTPKeys.url, file.getName(),
+		    Key.type, getType( file ),
+		    FTPKeys.raw, file.getRawListing(),
+		    Key.attributes, file.getName(),
+		    FTPKeys.isReadable, file.hasPermission( FTPFile.USER_ACCESS, FTPFile.READ_PERMISSION ),
+		    FTPKeys.isWritable, file.hasPermission( FTPFile.USER_ACCESS, FTPFile.WRITE_PERMISSION ),
+		    FTPKeys.isExecutable, file.hasPermission( FTPFile.USER_ACCESS, FTPFile.EXECUTE_PERMISSION )
+		);
+	}
+
+	/**
+	 * Get the mode of the file as an octal string
+	 * Example: 755
+	 *
+	 * @param file       The file to get the mode of
+	 * @param systemType The system type of the FTP server
+	 *
+	 * @return The mode of the file as an octal string
+	 */
+	public static String getMode( FTPFile file, String systemType ) {
+		if ( systemType.contains( "UNIX" ) ) {
+			return convertToOctal( file.getRawListing().substring( 0, 10 ) );
+		}
+		return "000";
+	}
+
+	/**
+	 * Convert a string of permissions to an octal string
+	 *
+	 * @param permissions The permissions string to convert
+	 *
+	 * @return The permissions as an octal string. If the permissions string is less than 10 characters, "000" is returned.
+	 */
+	public static String convertToOctal( String permissions ) {
+		if ( permissions.length() < 10 ) {
+			return "000";
+		}
+
+		StringBuilder octal = new StringBuilder();
+
+		for ( int i = 1; i < permissions.length(); i += 3 ) {
+			int value = 0;
+			if ( permissions.charAt( i ) == 'r' )
+				value += 4;
+			if ( permissions.charAt( i + 1 ) == 'w' )
+				value += 2;
+			if ( permissions.charAt( i + 2 ) == 'x' )
+				value += 1;
+			octal.append( value );
+		}
+
+		return octal.toString();
+	}
+
+	/**
+	 * Get the type of the file according to its type code
+	 *
+	 * @param file The file to get the type of
+	 *
+	 * @return The type of the file as a string
+	 */
+	public static String getType( FTPFile file ) {
+		return switch ( file.getType() ) {
+			case 0 -> "file";
+			case 1 -> "directory";
+			case 2 -> "symbolic link";
+			default -> "unknown";
+		};
 	}
 }

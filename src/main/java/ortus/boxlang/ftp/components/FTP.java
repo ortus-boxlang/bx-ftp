@@ -31,11 +31,9 @@ import ortus.boxlang.runtime.components.Component;
 import ortus.boxlang.runtime.context.IBoxContext;
 import ortus.boxlang.runtime.dynamic.casters.BooleanCaster;
 import ortus.boxlang.runtime.dynamic.casters.IntegerCaster;
-import ortus.boxlang.runtime.dynamic.casters.StringCaster;
 import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.IStruct;
-import ortus.boxlang.runtime.types.Query;
 import ortus.boxlang.runtime.types.Struct;
 import ortus.boxlang.runtime.types.exceptions.BoxIOException;
 import ortus.boxlang.runtime.validation.Validator;
@@ -102,6 +100,8 @@ public class FTP extends Component {
 
 		    // Query variable name when doing variable operations. Required for actions: listDir
 		    new Attribute( Key._name, "string" ),
+		    // The return type of the operation. Required for actions: listDir
+		    new Attribute( Key.returnType, "string", "query", Set.of( Validator.valueOneOf( "query", "array" ) ) ),
 
 		    // New name of the file/directory on the remote server. Required for actions: rename
 		    new Attribute( FTPKeys._new, "string" ),
@@ -205,10 +205,10 @@ public class FTP extends Component {
 					    )
 					);
 					ftpConnection.open(
-					    StringCaster.cast( attributes.get( Key.server ) ),
+					    attributes.getAsString( Key.server ),
 					    IntegerCaster.cast( attributes.get( Key.port ) ),
-					    StringCaster.cast( attributes.get( Key.username ) ),
-					    StringCaster.cast( attributes.get( Key.password ) ),
+					    attributes.getAsString( Key.username ),
+					    attributes.getAsString( Key.password ),
 					    BooleanCaster.cast( attributes.get( FTPKeys.passive ) ),
 					    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) )
 					);
@@ -223,25 +223,30 @@ public class FTP extends Component {
 
 				// Directory Actions
 				case "changedir" :
-					ftpConnection.changeDir( StringCaster.cast( attributes.get( Key.directory ) ) );
+					ftpConnection.changeDir( attributes.getAsString( Key.directory ) );
 					break;
 				case "createdir" :
-					ftpConnection.createDir( StringCaster.cast( attributes.get( FTPKeys._new ) ) );
+					returnValue = ftpConnection.createDir( attributes.getAsString( FTPKeys._new ) );
 					break;
 				case "removedir" :
-					returnValue = ftpConnection.removeDir( StringCaster.cast( attributes.get( Key.item ) ) );
+					returnValue = ftpConnection.removeDir( attributes.getAsString( Key.item ) );
 					break;
 				case "listdir" :
-					Query files = ftpConnection
+					Object files = ftpConnection
 					    .changeDir( attributes.getAsString( Key.directory ) )
-					    .listdir();
+					    .listdir(
+					        attributes.getAsString( Key.returnType ).equalsIgnoreCase( "query" )
+					            ? FTPConnection.ReturnType.QUERY
+					            : FTPConnection.ReturnType.ARRAY
+					    );
+					returnValue = files;
 					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
 					break;
 				case "getcurrentdir" :
 					returnValue = ftpConnection.getWorkingDirectory();
 					break;
 				case "existsdir" :
-					returnValue = ftpConnection.existsDir( StringCaster.cast( attributes.get( FTPKeys.directory ) ) );
+					returnValue = ftpConnection.existsDir( attributes.getAsString( FTPKeys.directory ) );
 					break;
 
 				// File Actions
@@ -261,20 +266,21 @@ public class FTP extends Component {
 					returnValue = ftpConnection.remove( attributes.getAsString( Key.item ) );
 					break;
 				case "existsfile" :
-					returnValue = ftpConnection.existsFile( StringCaster.cast( attributes.get( FTPKeys.remoteFile ) ) );
+					returnValue = ftpConnection.existsFile( attributes.getAsString( FTPKeys.remoteFile ) );
 					break;
 				case "putfile" :
 					ftpConnection.putFile(
-					    StringCaster.cast( attributes.get( FTPKeys.localFile ) ),
-					    StringCaster.cast( attributes.get( FTPKeys.remoteFile ) )
+					    attributes.getAsString( FTPKeys.localFile ),
+					    attributes.getAsString( FTPKeys.remoteFile )
 					);
 			}
 			;
 
 			// Set our connection variable in the context
-			if ( attributes.containsKey( FTPKeys.connection ) && attributes.get( FTPKeys.connection ) instanceof String s ) {
-				context.getDefaultAssignmentScope().put( Key.of( s ), ftpConnection );
-			}
+			context.getDefaultAssignmentScope().put(
+			    attributes.getAsString( FTPKeys.connection ),
+			    ftpConnection
+			);
 
 			// Check if there is a return value to set in our ftp result
 			if ( returnValue != null ) {
