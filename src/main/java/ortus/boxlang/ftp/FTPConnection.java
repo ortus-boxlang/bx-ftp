@@ -206,16 +206,24 @@ public class FTPConnection {
 	/**
 	 * Retrieve a file from the FTP server and write it out to a local file.
 	 *
-	 * @param remoteFile The name of the file to copy
-	 * @param localFile  The path of hte file to save
+	 * @param remoteFile   The name of the file to copy
+	 * @param localFile    The path of hte file to save
+	 * @param failIfExists If true, the file will not be copied if it already exists
 	 *
-	 * @throws IOException
+	 * @throws IOException If an error occurs while copying the file
+	 *
+	 * @return True if the file was copied, false otherwise
 	 */
-	public boolean getFile( String remoteFile, String localFile ) throws IOException {
-		java.io.File	targetFile	= ensureLocalFile( new java.io.File( localFile ) );
+	public boolean getFile( String remoteFile, String localFile, boolean failIfExists ) throws IOException {
+		java.io.File	targetFile	= new java.io.File( localFile );
 		boolean			result		= false;
 
-		try ( OutputStream outputStream = new FileOutputStream( localFile ) ) {
+		// Check if the file exists and if it should be copied over
+		if ( targetFile.exists() && failIfExists ) {
+			throw new BoxRuntimeException( "Error: Local file already exists and [failIfExists=true]" + targetFile );
+		}
+
+		try ( OutputStream outputStream = new FileOutputStream( targetFile ) ) {
 			result = client.retrieveFile( remoteFile, outputStream );
 		}
 
@@ -227,23 +235,17 @@ public class FTPConnection {
 	/**
 	 * Put a file on the remote server
 	 *
-	 * @param localFile    The file path of the local file you want to copy
-	 * @param remoteFile   The name of the remote file you want to create/update
-	 * @param failIfExists If true, the file will not be copied if it already exists
+	 * @param localFile  The file path of the local file you want to copy
+	 * @param remoteFile The name of the remote file you want to create/update
 	 *
 	 * @throws BoxRuntimeException If the local file does not exist, not a file, or cannot be read.
 	 * @throws IOException         If an error occurs while copying the file
 	 *
 	 * @return True if the file was copied, false otherwise
 	 */
-	public boolean putFile( String localFile, String remoteFile, boolean failIfExists ) throws IOException {
-		java.io.File	targetFile	= new java.io.File( localFile );
+	public boolean putFile( String localFile, String remoteFile ) throws IOException {
+		java.io.File	targetFile	= ensureLocalFile( new java.io.File( localFile ) );
 		boolean			result		= false;
-
-		// Check if the file exists and if it should be copied over
-		if ( targetFile.exists() && failIfExists ) {
-			throw new BoxRuntimeException( "Error: Local file already exists and [failIfExists=true]" + targetFile );
-		}
 
 		try ( java.io.FileInputStream inputStream = new java.io.FileInputStream( targetFile ) ) {
 			result = client.storeFile( remoteFile, inputStream );

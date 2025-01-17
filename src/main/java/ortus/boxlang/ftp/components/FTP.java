@@ -229,7 +229,7 @@ public class FTP extends Component {
 				case "removedir" :
 					String targetDirectory = attributes.getAsString( FTPKeys.directory );
 					// Legacy compatibility
-					if ( targetDirectory.isBlank() && attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
+					if ( attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
 						targetDirectory = attributes.getAsString( Key.item );
 					}
 					returnValue = ftpConnection.removeDir( targetDirectory );
@@ -256,7 +256,8 @@ public class FTP extends Component {
 				case "getfile" :
 					returnValue = ftpConnection.getFile(
 					    attributes.getAsString( FTPKeys.remoteFile ),
-					    attributes.getAsString( FTPKeys.localFile )
+					    attributes.getAsString( FTPKeys.localFile ),
+					    BooleanCaster.cast( attributes.get( FTPKeys.failIfExists ) )
 					);
 					break;
 				case "renameFile", "renameDir" :
@@ -268,7 +269,7 @@ public class FTP extends Component {
 				case "remove", "removeFile" :
 					String targetFile = attributes.getAsString( FTPKeys.remoteFile );
 					// Legacy compatibility
-					if ( targetFile.isBlank() && attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
+					if ( attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
 						targetFile = attributes.getAsString( Key.item );
 					}
 					returnValue = ftpConnection.remove( targetFile );
@@ -279,8 +280,7 @@ public class FTP extends Component {
 				case "putfile" :
 					returnValue = ftpConnection.putFile(
 					    attributes.getAsString( FTPKeys.localFile ),
-					    attributes.getAsString( FTPKeys.remoteFile ),
-					    BooleanCaster.cast( attributes.get( FTPKeys.failIfExists ) )
+					    attributes.getAsString( FTPKeys.remoteFile )
 					);
 			}
 			;
