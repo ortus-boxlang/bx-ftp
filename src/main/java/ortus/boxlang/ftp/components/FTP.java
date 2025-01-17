@@ -110,11 +110,12 @@ public class FTP extends Component {
 		    // Name of the file on the local file system. Required for actions: getFile, putFile
 		    new Attribute( FTPKeys.localFile, "string" ),
 		    // The existing file to rename. Required for actions: renameFile
-		    new Attribute( FTPKeys.existing, "string" )
+		    new Attribute( FTPKeys.existing, "string" ),
+		    // failIfExists (true) - If a local file with same name exists, should it be overwritten with action = getFile. Default is true
+		    new Attribute( FTPKeys.failIfExists, "boolean", true )
 
 			// Pending Attributes, not sure if we need to do them.
 			// ASCIIExtensionList - Delimited list of file extensions that force ASCII transfer mode, if transferMode = "auto".
-			// failIfExists (true) - If a local file with same name exists, should it be overwritten with action = getFile. Default is true
 			// proxyServer - name of the proxy server to use
 			// systemType - windows or unix
 			// transferMode - auto, ascii, binary
@@ -251,7 +252,7 @@ public class FTP extends Component {
 
 				// File Actions
 				case "getfile" :
-					ftpConnection.getFile(
+					returnValue = ftpConnection.getFile(
 					    attributes.getAsString( FTPKeys.remoteFile ),
 					    attributes.getAsString( FTPKeys.localFile )
 					);
@@ -269,9 +270,10 @@ public class FTP extends Component {
 					returnValue = ftpConnection.existsFile( attributes.getAsString( FTPKeys.remoteFile ) );
 					break;
 				case "putfile" :
-					ftpConnection.putFile(
+					returnValue = ftpConnection.putFile(
 					    attributes.getAsString( FTPKeys.localFile ),
-					    attributes.getAsString( FTPKeys.remoteFile )
+					    attributes.getAsString( FTPKeys.remoteFile ),
+					    BooleanCaster.cast( attributes.get( FTPKeys.failIfExists ) )
 					);
 			}
 			;

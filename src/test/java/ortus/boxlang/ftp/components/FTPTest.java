@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import ortus.boxlang.compiler.parser.BoxSourceType;
 import ortus.boxlang.ftp.BaseIntegrationTest;
 import ortus.boxlang.runtime.scopes.Key;
+import ortus.boxlang.runtime.types.Array;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
@@ -153,7 +154,33 @@ public class FTPTest extends BaseIntegrationTest {
 		for ( IStruct file : arr ) {
 			assertThat( file.get( Key._name ) ).isIn( expectations );
 		}
+	}
 
+	@DisplayName( "It can list files as array of structs" )
+	@Test
+	public void testListFilesAsArrayOfStructs() {
+
+		// @formatter:off
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="listdir" connection="conn" directory="/" name="result" returnType="array"/>
+				<bx:set println( result )>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		assertThat( variables.get( result ) ).isInstanceOf( Array.class );
+
+		Array			arr				= variables.getAsArray( result );
+		List<String>	expectations	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
+
+		for ( Object file : arr ) {
+			IStruct targetFile = ( IStruct ) file;
+			assertThat( targetFile.get( Key._name ) ).isIn( expectations );
+		}
 	}
 
 	@DisplayName( "It can create a folder" )
@@ -451,14 +478,16 @@ public class FTPTest extends BaseIntegrationTest {
 			assertThat( variables.getAsBoolean( Key.result ) ).isTrue();
 
 			BoxRuntimeException exception = assertThrows( BoxRuntimeException.class, () -> {
+				// @formatter:off
 				runtime.executeSource(
 				    """
-				      <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
-				    <bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
+				      	<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#"  passive="#(variables.ftpMode == 'passive')#" />
+				   		<bx:ftp action="getfile" connection="conn" remoteFile="something.txt" localFile="something.txt" result="myResult"/>
 				      """,
 				    context,
 				    BoxSourceType.BOXTEMPLATE
 				);
+				// @formatter:on
 			} );
 			assertThat( exception.getMessage() ).contains( "Local file already exists" );
 		} finally {

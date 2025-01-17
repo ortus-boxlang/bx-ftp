@@ -195,12 +195,28 @@ Remove a directory. The available attributes are:
 
 - `directory` - The directory to remove
 
+```java
+// Remove a directory
+bx:ftp action="removedir" connection="myConnection" directory="/path/to/directory" result="ftpResult";
+assert ftpResult.returnValue == true;
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the directory was removed or not.
+
 ## `renameDir`
 
 Rename a directory.  The available attributes are:
 
 - `existing` - The directory to rename
 - `new` - The new name of the directory
+
+```java
+// Rename a directory
+bx:ftp action="renamedir" connection="myConnection" existing="/path/to/directory" new="/path/to/new/directory" result="ftpResult";
+assert ftpResult.returnValue == true;
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the directory was renamed or not.
 
 ### File Actions
 
@@ -210,12 +226,29 @@ Remove a file. The available attributes are:
 
 - `item` - The file to remove
 
+
+```java
+// Remove a file
+bx:ftp action="removefile" connection="myConnection" item="/path/to/file.txt" result="ftpResult";
+assert ftpResult.returnValue == true;
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the file was removed or not.
+
 ## `renameFile`
 
 Rename a file. The available attributes are:
 
 - `existing` - The directory to rename
 - `new` - The new name of the directory
+
+```java
+// Rename a file
+bx:ftp action="renamefile" connection="myConnection" existing="/path/to/file.txt" new="/path/to/newfile.txt" result="ftpResult";
+assert ftpResult.returnValue == true;
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the file was renamed or not.
 
 ## `putfile`
 
@@ -224,18 +257,44 @@ Upload a file. The available attributes are:
 - `localFile` - The local file to upload
 - `remoteFile` - The remote file to upload to
 
+```java
+// Upload a file
+bx:ftp action="putfile" connection="myConnection" localFile="/path/to/local/file.txt" remoteFile="/path/to/remote/file.txt";
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the file was uploaded or not.
+
 ## `getfile`
 
 Download a file. The available attributes are:
 
 - `localFile` - The local file to download to
 - `remoteFile` - The remote file to download
+- `failIfExists` - Whether to fail if the localFile already exists (default is `true`). If `false` then we will overwrite the file.
+
+```java
+// Download a file
+bx:ftp action="getfile" connection="myConnection" remoteFile="/path/to/remote/file.txt" localFile="/path/to/local/file.txt";
+
+// Download a file and overwrite if it exists
+bx:ftp action="getfile" connection="myConnection" remoteFile="/path/to/remote/file.txt" localFile="/path/to/local/file.txt" failIfExists="false";
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the file was downloaded or not.
 
 ## `existsFile`
 
 Check if a file exists. The available attributes are:
 
 - `remoteFile` - The file to check for existence
+
+```java
+// Check if a file exists
+bx:ftp action="existsfile" connection="myConnection" remoteFile="/path/to/file.txt" result="ftpResult";
+assert ftpResult.returnValue == true;
+```
+
+If you use the result object, the `returnValue` key will have a boolean value of whether the file exists or not.
 
 ## CFML Compatibility
 

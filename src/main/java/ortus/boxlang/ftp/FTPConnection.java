@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http: //www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@
  */
 package ortus.boxlang.ftp;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -193,34 +194,68 @@ public class FTPConnection {
 	 *
 	 * @throws IOException
 	 */
-	public void getFile( String remoteFile, String localFile ) throws IOException {
-		java.io.File file = new java.io.File( localFile );
-		if ( file.exists() ) {
-			throw new BoxRuntimeException( "Error: Local file already exists: " + localFile );
-		}
+	public boolean getFile( String remoteFile, String localFile ) throws IOException {
+		java.io.File	targetFile	= ensureLocalFile( new java.io.File( localFile ) );
+		boolean			result		= false;
+
 		try ( OutputStream outputStream = new FileOutputStream( localFile ) ) {
-			client.retrieveFile( remoteFile, outputStream );
+			result = client.retrieveFile( remoteFile, outputStream );
 		}
+
 		this.handleError();
+
+		return result;
 	}
 
 	/**
 	 * Put a file on the remote server
 	 *
-	 * @param localFile  The file path of the local file you want to copy
-	 * @param remoteFile The name of the remote file you want to create/update
+	 * @param localFile    The file path of the local file you want to copy
+	 * @param remoteFile   The name of the remote file you want to create/update
+	 * @param failIfExists If true, the file will not be copied if it already exists
 	 *
-	 * @throws IOException
+	 * @throws BoxRuntimeException If the local file does not exist, not a file, or cannot be read.
+	 * @throws IOException         If an error occurs while copying the file
+	 *
+	 * @return True if the file was copied, false otherwise
 	 */
-	public void putFile( String localFile, String remoteFile ) throws IOException {
-		java.io.File file = new java.io.File( localFile );
-		if ( !file.exists() ) {
+	public boolean putFile( String localFile, String remoteFile, boolean failIfExists ) throws IOException {
+		java.io.File	targetFile	= new java.io.File( localFile );
+		boolean			result		= false;
+
+		// Check if the file exists and if it should be copied over
+		if ( targetFile.exists() && failIfExists ) {
+			throw new BoxRuntimeException( "Error: Local file already exists and [failIfExists=true]" + targetFile );
+		}
+
+		try ( java.io.FileInputStream inputStream = new java.io.FileInputStream( targetFile ) ) {
+			result = client.storeFile( remoteFile, inputStream );
+		}
+
+		this.handleError();
+
+		return result;
+	}
+
+	/**
+	 * Ensure that the local file exists, is a file, and can be read
+	 *
+	 * @param localFile The local file to check
+	 *
+	 * @throws BoxRuntimeException If the local file does not exist, not a file, or cannot be read.
+	 */
+	private File ensureLocalFile( File localFile ) {
+		// validations
+		if ( !localFile.exists() ) {
 			throw new BoxRuntimeException( "Error: Local file does not exist: " + localFile );
 		}
-		try ( java.io.FileInputStream inputStream = new java.io.FileInputStream( localFile ) ) {
-			client.storeFile( remoteFile, inputStream );
+		if ( !localFile.isFile() ) {
+			throw new BoxRuntimeException( "Error: Path is not a file: " + localFile );
 		}
-		this.handleError();
+		if ( !localFile.canRead() ) {
+			throw new BoxRuntimeException( "Error: Cannot read the file: " + localFile );
+		}
+		return localFile;
 	}
 
 	/**
@@ -420,8 +455,8 @@ public class FTPConnection {
 	 */
 	private FTPConnection handleError() {
 
-		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) && stopOnError ) {
-			throw new BoxRuntimeException( "FTP error: " + client.getReplyString() );
+		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) && this.stopOnError ) {
+			throw new BoxRuntimeException( "FTP operation error: " + client.getReplyString() );
 		}
 
 		return this;
