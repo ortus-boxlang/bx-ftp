@@ -91,6 +91,8 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys.stopOnError, "boolean" ),
 		    new Attribute( FTPKeys.passive, "boolean", FTPConnection.DEFAULT_PASSIVE ),
 		    new Attribute( FTPKeys.timeout, "numeric", FTPConnection.DEFAULT_TIMEOUT.toSeconds() ),
+		    // this is the proxy server to use, it can include the port number as well
+		    new Attribute( Key.proxyServer, "string" ),
 		    // Directory on which to performan an operation. Required for actions: changeDir, createDir, listDir, existsDir
 		    new Attribute( Key.directory, "string" ),
 		    // Query variable name when doing variable operations. Required for actions: listDir
@@ -205,7 +207,8 @@ public class FTP extends Component {
 					    attributes.getAsString( Key.username ),
 					    attributes.getAsString( Key.password ),
 					    BooleanCaster.cast( attributes.get( FTPKeys.passive ) ),
-					    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) )
+					    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) ),
+					    attributes.getAsString( Key.proxyServer )
 					);
 					break;
 				case "close" :

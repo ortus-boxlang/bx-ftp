@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
@@ -53,13 +55,14 @@ public class FTPConnection {
 	 * --------------------------------------------------------------------------
 	 */
 
-	public static final int			DEFAULT_PORT			= 21;
-	public static final boolean		DEFAULT_PASSIVE			= false;
-	public static final String		DEFAULT_USERNAME		= "anonymous";
-	public static final String		DEFAULT_PASSWORD		= "anonymous";
-	public static final boolean		DEFAULT_STOP_ON_ERROR	= true;
+	public static final int			DEFAULT_PORT				= 21;
+	public static final boolean		DEFAULT_PASSIVE				= false;
+	public static final String		DEFAULT_USERNAME			= "anonymous";
+	public static final String		DEFAULT_PASSWORD			= "anonymous";
+	public static final boolean		DEFAULT_STOP_ON_ERROR		= true;
+	public static final int			DEFAULT_PROXY_SERVER_PORT	= 1080;
 	// In Seconds
-	public static final Duration	DEFAULT_TIMEOUT			= Duration.ofSeconds( 30 );
+	public static final Duration	DEFAULT_TIMEOUT				= Duration.ofSeconds( 30 );
 
 	// Enum for return types: query and array
 	public enum ReturnType {
@@ -125,12 +128,13 @@ public class FTPConnection {
 	 * Connect to an FTP server and open a connection. If the username/password are null, the default anonymous user will be used.
 	 * If passive is null, the default is false.
 	 *
-	 * @param server   The server to connect to
-	 * @param port     The port to connect to
-	 * @param username The username to use
-	 * @param password The password to use
-	 * @param passive  Whether to use passive mode
-	 * @param timeout  The timeout in seconds as a Duration
+	 * @param server      The server to connect to
+	 * @param port        The port to connect to
+	 * @param username    The username to use
+	 * @param password    The password to use
+	 * @param passive     Whether to use passive mode
+	 * @param timeout     The timeout in seconds as a Duration
+	 * @param proxyServer The proxy server to use, if not null or empty. Example: 'localhost', 'test.myproxy.com:8080'
 	 *
 	 * @throws IOException If an error occurs while connecting
 	 */
@@ -139,7 +143,8 @@ public class FTPConnection {
 	    String username,
 	    String password,
 	    boolean passive,
-	    Duration timeout ) throws IOException {
+	    Duration timeout,
+	    String proxyServer ) throws IOException {
 		// Verify that the required parameters are present or default them
 		Objects.requireNonNull( server, "Server is required" );
 		Objects.requireNonNullElse( port, DEFAULT_PORT );
@@ -154,6 +159,18 @@ public class FTPConnection {
 		// Connect to the server
 		this.client.connect( server, port );
 		this.client.setDataTimeout( timeout );
+
+		// Check if the proxy server is set
+		if ( proxyServer != null && !proxyServer.isEmpty() ) {
+			// the proxy can have a port included in the string as: 'localhost:8080' or not.
+			String[]	proxyParts	= proxyServer.split( ":" );
+			String		proxyHost	= proxyParts[ 0 ];
+			int			proxyPort	= proxyParts.length > 1 ? Integer.parseInt( proxyParts[ 1 ] ) : DEFAULT_PROXY_SERVER_PORT;
+
+			this.client.setProxy(
+			    new Proxy( Proxy.Type.SOCKS, new InetSocketAddress( proxyHost, proxyPort ) )
+			);
+		}
 
 		// Login with username and password
 		if ( !this.client.login( username, password ) ) {

@@ -74,6 +74,7 @@ Open a connection to an FTP server.  The available attributes are:
 - `timeout` - The timeout for the connection (default is 30 seconds)
 - `secure` - Whether to use a secure connection (default is `false`)
 - `passive` - Whether to use passive mode (default is `true`)
+- `proxyServer` - The proxy server to use. This can be an ip or hostname. By default it uses port `1080`. You cn also add the port via a colon like `myproxy.com:8080`
 
 ```java
 // Connect to an FTP server
@@ -82,7 +83,25 @@ bx:ftp
 	connection="myConnection"
 	server="ftp.example.com"
 	username="myuser"
-	assword="mypass";
+	password="mypass";
+
+// Connect to an FTP server via a proxy with a custom port
+bx:ftp
+	action="open"
+	connection="myConnection"
+	server="ftp.example.com"
+	username="myuser"
+	password="mypass"
+	proxyServer="myproxy.com:8080";
+
+// Connect to an FTP server via a proxy with a default port
+bx:ftp
+	action="open"
+	connection="myConnection"
+	server="ftp.example.com"
+	username="myuser"
+	password="mypass"
+	proxyServer="myproxy.com";
 ```
 
 ### `close`
