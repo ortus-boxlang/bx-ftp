@@ -91,18 +91,12 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys.stopOnError, "boolean" ),
 		    new Attribute( FTPKeys.passive, "boolean", FTPConnection.DEFAULT_PASSIVE ),
 		    new Attribute( FTPKeys.timeout, "numeric", FTPConnection.DEFAULT_TIMEOUT.toSeconds() ),
-
 		    // Directory on which to performan an operation. Required for actions: changeDir, createDir, listDir, existsDir
 		    new Attribute( Key.directory, "string" ),
-
-		    // The target file/directory. Required for actions: exists, remove
-		    new Attribute( Key.item, "string" ),
-
 		    // Query variable name when doing variable operations. Required for actions: listDir
 		    new Attribute( Key._name, "string" ),
 		    // The return type of the operation. Required for actions: listDir
 		    new Attribute( Key.returnType, "string", "query", Set.of( Validator.valueOneOf( "query", "array" ) ) ),
-
 		    // New name of the file/directory on the remote server. Required for actions: rename
 		    new Attribute( FTPKeys._new, "string" ),
 		    // The name of the file on the remote server. Required for actions: getFile, putFile, existsFile
@@ -230,7 +224,12 @@ public class FTP extends Component {
 					returnValue = ftpConnection.createDir( attributes.getAsString( FTPKeys._new ) );
 					break;
 				case "removedir" :
-					returnValue = ftpConnection.removeDir( attributes.getAsString( Key.item ) );
+					String targetDirectory = attributes.getAsString( FTPKeys.directory );
+					// Legacy compatibility
+					if ( targetDirectory.isBlank() && attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
+						targetDirectory = attributes.getAsString( Key.item );
+					}
+					returnValue = ftpConnection.removeDir( targetDirectory );
 					break;
 				case "listdir" :
 					Object files = ftpConnection
@@ -264,7 +263,12 @@ public class FTP extends Component {
 					);
 					break;
 				case "remove", "removeFile" :
-					returnValue = ftpConnection.remove( attributes.getAsString( Key.item ) );
+					String targetFile = attributes.getAsString( FTPKeys.remoteFile );
+					// Legacy compatibility
+					if ( targetFile.isBlank() && attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
+						targetFile = attributes.getAsString( Key.item );
+					}
+					returnValue = ftpConnection.remove( targetFile );
 					break;
 				case "existsfile" :
 					returnValue = ftpConnection.existsFile( attributes.getAsString( FTPKeys.remoteFile ) );

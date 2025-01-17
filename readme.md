@@ -175,18 +175,18 @@ assert results.len() == 5;
 The available columns in the query are:
 
 - `name` - The name of the file or directory
-- `isDirectory` - Whether the item is a directory (boolean)
-- `lastModified` - The last modified date of the item
-- `size` - The size of the item in bytes (aliased as length for CFML compatibility)
-- `mode` - The mode of the item
+- `isDirectory` - Whether the file is a directory (boolean)
+- `lastModified` - The last modified date of the file
+- `size` - The size of the file in bytes (aliased as length for CFML compatibility)
+- `mode` - The mode of the file
 - `path` - File path (without drive designation) of the current element.
 - `url` - Complete URL for the current element (file or directory).
-- `type` - The type of the item (file, directory, symbolic link, unknown)
-- `raw` - The raw representation of the item listing
-- `attributes` - The attributes of the item
-- `isReadable` - Whether the item is readable
-- `isWritable` - Whether the item is writable
-- `isExecutable` - Whether the item is executable
+- `type` - The type of the file (file, directory, symbolic link, unknown)
+- `raw` - The raw representation of the file listing
+- `attributes` - The attributes of the file
+- `isReadable` - Whether the file is readable
+- `isWritable` - Whether the file is writable
+- `isExecutable` - Whether the file is executable
 
 
 ## `removeDir`
@@ -224,12 +224,12 @@ If you use the result object, the `returnValue` key will have a boolean value of
 
 Remove a file. The available attributes are:
 
-- `item` - The file to remove
+- `remoteFile` - The remote file to remove
 
 
 ```java
 // Remove a file
-bx:ftp action="removefile" connection="myConnection" item="/path/to/file.txt" result="ftpResult";
+bx:ftp action="removefile" connection="myConnection" remoteFile="/path/to/file.txt" result="ftpResult";
 assert ftpResult.returnValue == true;
 ```
 
