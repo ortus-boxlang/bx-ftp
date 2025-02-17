@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-02-17
+
 ### Fixed
 
 - Location of the zip missing `bx-ftp` module
@@ -22,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First iteration of this module
 
-[Unreleased]: https://github.com/ortus-boxlang/bx-ftp/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/ortus-boxlang/bx-ftp/compare/v1.1.0...HEAD
+
+[1.1.0]: https://github.com/ortus-boxlang/bx-ftp/compare/v1.0.0...v1.1.0
 
 [1.0.0]: https://github.com/ortus-boxlang/bx-ftp/compare/136f3680c7f92b785733421a2a92c3db2d91d404...v1.0.0
