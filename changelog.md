@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Location of the zip missing `bx-ftp` module
+- Junit regresions for testing
+
+### Added
+
+- Gradle plugin upgrades
+
 ## [1.0.0] - 2025-01-17
 
 - First iteration of this module
