@@ -3,13 +3,13 @@
 	"version": "@build.version@+@build.number@",
 	"location": "https://downloads.ortussolutions.com/ortussolutions/boxlang-modules/bx-ftp/@build.version@/bx-ftp-@build.version@.zip",
 	"author": "Ortus Solutions",
-	"homepage": "https://github.com/boxlang-modules/bx-ftp",
-	"documentation": "https://github.com/boxlang-modules/bx-ftp",
+	"homepage": "https://github.com/ortus-boxlang/bx-ftp",
+	"documentation": "https://github.com/ortus-boxlang/bx-ftp",
 	"repository": {
 		"type": "git",
-		"URL": "https://github.com/boxlang-modules/bx-ftp"
+		"URL": "https://github.com/ortus-boxlang/bx-ftp"
 	},
-	"bugs": "https://github.com/boxlang-modules/bx-ftp/issues",
+	"bugs": "https://github.com/ortus-boxlang/bx-ftp/issues",
 	"slug": "bx-ftp",
 	"shortDescription": "Module template for BoxLang modules",
 	"type": "boxlang-modules",
