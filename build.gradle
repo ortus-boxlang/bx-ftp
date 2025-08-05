@@ -40,7 +40,7 @@ dependencies {
     compileOnly files( 'src/test/resources/libs/boxlang-' + boxlangVersion + '.jar' )
 
 	// https://mvnrepository.com/artifact/commons-net/commons-net
-	implementation 'commons-net:commons-net:3.11.1'
+	implementation 'commons-net:commons-net:3.12.0'
 
     // Testing Dependencies
 	testImplementation files( '../../boxlang/build/distributions/boxlang-' + boxlangVersion + '.jar' )
