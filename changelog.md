@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Updated
+
+- Bump commons-net:commons-net from 3.11.1 to 3.12.0 #12
+- New github actions for building and testing #13
+- Changed dependabot to monthly
+- Updated `tests.yml` to latest versions
+
+* * *
+
 ## [1.1.0] - 2025-02-17
 
 ### Fixed
