@@ -11,10 +11,15 @@
 	},
 	"bugs": "https://github.com/ortus-boxlang/bx-ftp/issues",
 	"slug": "bx-ftp",
-	"shortDescription": "Module template for BoxLang modules",
-	"type": "boxlang-modules",
+	"shortDescription": "FTP client functionality for BoxLang applications",
+	"type": "modules",
 	"keywords": [
-		"boxlang"
+		"boxlang",
+		"ftp",
+		"file-transfer",
+		"client",
+		"upload",
+		"download"
 	],
 	"boxlang": {
 		"minimumVersion": "1.0.0",

@@ -11,11 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added new `onFTPError` interception point for handling FTP errors globally
+- Added supplier lambdas for events and performance
+- Updated to use nonConcurrent Structs for better performance for announcements
 - Added AI instructions for better context
 - Updated all GitHub actions to latest versions
 - Updated Gradle to latest
 - Updated Java Dependency versions to latests
 - More tests for local passive mode connections
+
+### Fixed
+
+- before and after FTP Calls where not being registered correctly
 
 ## [1.2.0] - 2025-08-05
 

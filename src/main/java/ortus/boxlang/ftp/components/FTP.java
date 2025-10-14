@@ -182,7 +182,7 @@ public class FTP extends Component {
 		// Announce the FTP Action event
 		runtime.announce(
 		    FTPKeys.beforeFTPCall,
-		    Struct.of(
+		    () -> Struct.ofNonConcurrent(
 		        "connection", ftpConnection,
 		        "action", action,
 		        "result", ftpResult,
@@ -306,7 +306,7 @@ public class FTP extends Component {
 			// Announce the FTP Action event
 			runtime.announce(
 			    FTPKeys.afterFTPCall,
-			    Struct.of(
+			    () -> Struct.ofNonConcurrent(
 			        "connection", ftpConnection,
 			        "action", action,
 			        "result", ftpResult,
@@ -317,6 +317,18 @@ public class FTP extends Component {
 		} catch ( IOException e ) {
 			String message = String.format( "Error executing action [%s] -> [%s]", action, e.getMessage() );
 			this.logger.error( message, e );
+
+			// Announce the FTP Error event
+			runtime.announce(
+			    FTPKeys.onFTPError,
+			    Struct.ofNonConcurrent(
+			        "connection", ftpConnection,
+			        "action", action,
+			        "error", e,
+			        "attributes", attributes
+			    )
+			);
+
 			throw new BoxIOException( message, e );
 		}
 
