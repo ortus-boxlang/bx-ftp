@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added AI instructions for better context
+- Updated all GitHub actions to latest versions
+- Updated Gradle to latest
+- Updated Java Dependency versions to latests
+- More tests for local passive mode connections
+
 ## [1.2.0] - 2025-08-05
 
 ### Updated
