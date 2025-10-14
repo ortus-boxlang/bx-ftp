@@ -15,3 +15,4 @@ src/test/resources/libs/*
 
 ### Environment ###
 .env
+test_put.txt
