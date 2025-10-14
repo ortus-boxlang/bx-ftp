@@ -48,10 +48,11 @@ public class FTPService extends BaseService {
 	 * Interception points for the service.
 	 */
 	private static final Key[]						INTERCEPTION_POINTS	= List.of(
-	    // I NEED YOU TO CREATE events for onFTPConnection, onFTPDisconnection, onFTPCommand, etc.
 	    FTPKeys.onFTPConnectionOpen,
 	    FTPKeys.onFTPConnectionClose,
-	    FTPKeys.postFTPCall
+	    FTPKeys.afterFTPCall,
+	    FTPKeys.beforeFTPCall,
+	    FTPKeys.onFTPError
 	).toArray( new Key[ 0 ] );
 
 	/**

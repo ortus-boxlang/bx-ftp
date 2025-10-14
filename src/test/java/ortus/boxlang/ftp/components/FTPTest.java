@@ -137,8 +137,17 @@ public class FTPTest extends BaseIntegrationTest {
 		// @formatter:off
 		runtime.executeSource(
 			"""
-				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
-				<bx:ftp action="listdir" connection="conn" directory="/" name="result"/>
+				<bx:ftp action="open"
+					connection="conn"
+					username="#variables.username#"
+					password="#variables.password#"
+					server="#variables.server#"
+					port="#variables.port#"
+					passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="listdir"
+					connection="conn"
+					directory="/"
+					name="result"/>
 				<bx:set println( result )>
 		    """,
 			context,
