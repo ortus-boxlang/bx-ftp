@@ -1,5 +1,12 @@
 # BoxLang FTP Module - AI Coding Agent Instructions
 
+## Documentation Resources
+
+For comprehensive BoxLang documentation and API references, use the **BoxLang MCP Server**:
+- **MCP Server URL**: https://boxlang.ortusbooks.com/~gitbook/mcp
+- **Usage**: Access BoxLang language features, component APIs, module development patterns, and integration guides
+- **Search Documentation**: Use the MCP tools to find specific BoxLang functionality, syntax, and best practices
+
 ## Architecture Overview
 
 This is a **BoxLang module** that provides FTP functionality through a service-oriented architecture:
@@ -25,8 +32,17 @@ This is a **BoxLang module** that provides FTP functionality through a service-o
 # Build and package module
 ./gradlew build
 
-# Run tests with Testcontainers (automatic FTP server)
+# Start FTP server for testing
+docker-compose up -d --build
+
+# Run tests (requires FTP server running)
 ./gradlew test
+
+# Run specific test
+./gradlew test --tests "*FTPTest.testListFiles"
+
+# Stop FTP server
+docker-compose down
 
 # Create module distribution
 ./gradlew createModuleStructure zipModuleStructure
@@ -34,9 +50,11 @@ This is a **BoxLang module** that provides FTP functionality through a service-o
 
 ### Testing Architecture
 - **Base Test**: `BaseIntegrationTest` loads module into BoxRuntime with `boxlang.json` config
-- **Integration Tests**: Use Testcontainers with Docker Compose for real FTP server
+- **Manual Docker Setup**: Uses `Docker-Compose.yml` for consistent FTP server environment
 - **Test FTP Server**: Ubuntu + vsftpd, credentials: `test_user/testpass`
-- **Connection Setup**: Test base automatically configures FTP properties from container
+- **FTP Server Ports**: Control port 2221, data port 2220, passive ports 10000-10010
+- **Connection Setup**: Test configuration loaded from `.env` file in test resources
+- **Passive Mode**: Critical vsftpd configuration for data connections (see FTP Server Configuration section)
 
 ## BoxLang Integration Patterns
 
@@ -79,9 +97,28 @@ public class FTPService extends BaseService {
 4. Package as ZIP for distribution
 
 ### Docker Integration
-- **Development**: `Docker-Compose.yml` for manual testing (ports 2221, 2222)
-- **Testing**: Testcontainers uses separate Docker Compose with dynamic ports
+- **Development**: `Docker-Compose.yml` for manual testing (ports 2221, 2220, 10000-10010)
 - **FTP Server**: vsftpd in Ubuntu container with test user and files
+- **Test Configuration**: `.env` file in `src/test/resources/` with FTP connection properties
+- **Manual Testing**: Use root `Docker-Compose.yml` for persistent FTP server
+
+### FTP Server Configuration
+Critical `vsftpd.conf` settings for proper operation:
+```conf
+# Essential passive mode configuration
+pasv_enable=YES
+pasv_min_port=10000
+pasv_max_port=10010
+pasv_address=127.0.0.1
+
+# User authentication
+local_enable=YES
+write_enable=YES
+chroot_local_user=YES
+allow_writeable_chroot=YES
+```
+
+**Important**: Passive mode configuration is essential for data connections. Missing these settings will cause "connection refused" errors during file operations even if control connection succeeds.
 
 ## Critical Integration Points
 
@@ -93,12 +130,24 @@ public class FTPService extends BaseService {
 ## Development Workflow
 
 1. **Module Changes**: Edit Java/BoxLang → run `./gradlew build`
-2. **Test Locally**: Use `./gradlew test` (starts containers automatically)
+2. **Test Locally**: Start FTP server with `docker-compose up -d --build` → run `./gradlew test`
 3. **Manual Testing**: Use root `Docker-Compose.yml` for persistent FTP server
 4. **Distribution**: `./gradlew zipModuleStructure` creates installable ZIP
 
-## Common Issues
+## Common Issues & Solutions
 
-- **Port Conflicts**: Manual Docker vs Testcontainers - stop manual containers before tests
+### Local Test Failures ("Connection Refused")
+- **Symptom**: Tests pass in CI but fail locally with FTP data connection errors
+- **Root Cause**: Missing passive mode configuration in `vsftpd.conf`
+- **Solution**: Ensure `resources/vsftpd.conf` contains proper passive mode settings (see FTP Server Configuration)
+- **Debugging**: Use `nc -v localhost 2221` to test control connection, check Docker port mappings
+
+### Container Management
+- **Port Conflicts**: Stop existing containers before tests: `docker-compose down`
+- **Clean Rebuild**: Use `docker-compose up -d --build --force-recreate` for configuration changes
+- **Test Isolation**: Manual Docker containers should be stopped before running `./gradlew test`
+
+### Module Development
 - **Module Loading**: Tests require `boxlang.json` config in `src/test/resources/`
 - **Connection State**: FTP connections are stateful - ensure proper cleanup in error scenarios
+- **Service Registration**: Uses `@BoxComponent` annotation for automatic discovery
