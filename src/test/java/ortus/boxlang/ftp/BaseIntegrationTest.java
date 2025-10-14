@@ -14,16 +14,11 @@
  */
 package ortus.boxlang.ftp;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import ortus.boxlang.runtime.BoxRuntime;
 import ortus.boxlang.runtime.context.IBoxContext;
@@ -38,40 +33,18 @@ import ortus.boxlang.runtime.services.ModuleService;
  * Use this as a base integration test for your non web-support package
  * modules. If you want web based testing, use the BaseWebIntegrationTest
  */
-@Testcontainers
 public abstract class BaseIntegrationTest {
 
 	protected static BoxRuntime				runtime;
 	protected static ModuleService			moduleService;
 	protected static ModuleRecord			moduleRecord;
-	protected static Key					result			= new Key( "result" );
-	protected static Key					moduleName		= FTPKeys.bxftp;
+	protected static Key					result		= new Key( "result" );
+	protected static Key					moduleName	= FTPKeys.bxftp;
 	protected ScriptingRequestBoxContext	context;
 	protected IScope						variables;
 
-	// FTP server configuration
-	protected static String					ftpHost;
-	protected static int					ftpPort;
-	protected static final String			FTP_USERNAME	= "test_user";
-	protected static final String			FTP_PASSWORD	= "testpass";
-
-	@Container
-	static DockerComposeContainer<?>		environment		= new DockerComposeContainer<>( new File( "src/test/resources/docker-compose.yml" ) )
-	    .withBuild( true ) // run docker compose build
-	    .withExposedService( "ftp", 21, Wait.forListeningPort() )
-	    .withExposedService( "ftp", 22, Wait.forListeningPort() )
-	    // expose a few passive ports you'll actually use (range is fine to repeat)
-	    .withExposedService( "ftp", 10000, Wait.forListeningPort() )
-	    .withLocalCompose( true ); // use your local docker compose binary
-
 	@BeforeAll
 	public static void setup() {
-		// Start the FTP container and get connection details
-		ftpHost	= environment.getServiceHost( "ftp", 21 );
-		ftpPort	= environment.getServicePort( "ftp", 21 );
-
-		System.out.println( "FTP Server started at " + ftpHost + ":" + ftpPort );
-
 		runtime			= BoxRuntime.getInstance( true, Path.of( "src/test/resources/boxlang.json" ).toString() );
 		moduleService	= runtime.getModuleService();
 		// Load the module
@@ -83,12 +56,6 @@ public abstract class BaseIntegrationTest {
 		// Create the mock contexts
 		context		= new ScriptingRequestBoxContext( runtime.getRuntimeContext() );
 		variables	= context.getScopeNearby( VariablesScope.name );
-
-		// Set FTP connection properties from Testcontainers
-		System.setProperty( "BOXLANG_FTP_USERNAME", FTP_USERNAME );
-		System.setProperty( "BOXLANG_FTP_PASSWORD", FTP_PASSWORD );
-		System.setProperty( "BOXLANG_FTP_SERVER", ftpHost );
-		System.setProperty( "BOXLANG_FTP_PORT", String.valueOf( ftpPort ) );
 	}
 
 	protected static void loadModule( IBoxContext context ) {
