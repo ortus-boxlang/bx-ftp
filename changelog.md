@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New GitHub Actions for building and testing
+- Updated Gradle to latest
+- Updated Java Dependency versions to latests
+
+### Fixed
+
+- Updated box.json type to boxlang-modules so it installs correctly in BoxLang
+
 ## [1.3.0] - 2025-10-14
 
 ### Added

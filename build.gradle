@@ -44,22 +44,31 @@ dependencies {
 	}
 
 	// https://mvnrepository.com/artifact/commons-net/commons-net
-	implementation 'commons-net:commons-net:3.11.1'
+	implementation 'commons-net:commons-net:3.12.0'
 
-    // Testing Dependencies
-    testImplementation "org.junit.jupiter:junit-jupiter:6.+"
+	// Test Frameworks
+	testImplementation "org.junit.jupiter:junit-jupiter:6.+"
 	testImplementation "org.mockito:mockito-core:5.+"
 	testImplementation "com.google.truth:truth:1.+"
-
 	// Explicitly declare the JUnit platform launcher (to avoid deprecation)
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 java {
-    sourceCompatibility = JavaVersion.toVersion( jdkVersion )
+	sourceCompatibility = JavaVersion.toVersion( jdkVersion )
 	targetCompatibility = JavaVersion.toVersion( jdkVersion )
 	withJavadocJar()
-	withSourcesJar()
+}
+
+// Exclude main resources from IDE classpath to avoid class loading conflicts
+// Resources are still included in the JAR/build outputs
+sourceSets {
+	main {
+		resources {
+			// Empty the resources to exclude from IDE classpath
+			srcDirs = []
+		}
+	}
 }
 
 compileJava {
@@ -115,7 +124,6 @@ javadoc.finalizedBy( zipJavadocs )
  */
 serviceLoader {
 	serviceInterface 'ortus.boxlang.runtime.jdbc.drivers.IJDBCDriver'
-	serviceInterface 'ortus.boxlang.runtime.jdbc.drivers.IJDBCDriver'
     serviceInterface 'ortus.boxlang.runtime.bifs.BIF'
     serviceInterface 'ortus.boxlang.runtime.components.Component'
     serviceInterface 'ortus.boxlang.runtime.async.tasks.IScheduler'
@@ -131,7 +139,6 @@ jar {
     }
 }
 shadowJar {
-	archiveClassifier = ''
 	archiveClassifier = ''
     mergeServiceFiles()
     destinationDirectory = file( "build/libs" )
@@ -157,7 +164,7 @@ spotless {
  * - Copies the src/main/bx/** to build/module/ folder.
  */
 task createModuleStructure(type: Copy) {
-    dependsOn jar
+	mustRunAfter shadowJar, jar
     from( 'build/libs' ) {
 		include "${project.name}-${version}.jar"
         into 'libs'
@@ -197,8 +204,8 @@ task zipModuleStructure( type: Zip ) {
         println "+ Module has been zipped to the distribution folder"
     }
 }
-createModuleStructure.finalizedBy( zipModuleStructure )
 shadowJar.finalizedBy( createModuleStructure )
+createModuleStructure.finalizedBy( zipModuleStructure )
 
 test {
     useJUnitPlatform()
@@ -206,12 +213,10 @@ test {
 		showStandardStreams = true
 	}
 	classpath = classpath.filter { !it.path.contains( "build${File.separator}resources" ) }
-	classpath = classpath.filter { !it.path.contains( "build${File.separator}resources" ) }
 }
 
 /**
  * TEMPORARY until we publish to maven
- * Task to download the latest jar from https://ortus-temp.s3.amazonaws.com/jericho/libs/boxlang-1.0.0.jar
  * Task to download the latest jar from https://ortus-temp.s3.amazonaws.com/jericho/libs/boxlang-1.0.0.jar
  */
 task downloadBoxLang( type: Download ) {
@@ -248,9 +253,7 @@ project.ext.bumpVersion = { boolean major = false, boolean minor = false, boolea
 		newVersion = "${versionParts[ 0 ]}.${versionParts[ 1 ]}.${newPathVersion}"
 	} else if( minor ){
 		newVersion = "${versionParts[ 0 ]}.${newPathVersion}.0"
-		newVersion = "${versionParts[ 0 ]}.${newPathVersion}.0"
 	} else if( major ){
-		newVersion = "${newPathVersion}.0.0"
 		newVersion = "${newPathVersion}.0.0"
 	}
 

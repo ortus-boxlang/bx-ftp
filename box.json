@@ -12,7 +12,7 @@
 	"bugs": "https://github.com/ortus-boxlang/bx-ftp/issues",
 	"slug": "bx-ftp",
 	"shortDescription": "FTP client functionality for BoxLang applications",
-	"type": "modules",
+	"type": "boxlang-modules",
 	"keywords": [
 		"boxlang",
 		"ftp",
