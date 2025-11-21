@@ -13,6 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New GitHub Actions for building and testing
+- Updated Gradle to latest
+- Updated Java Dependency versions to latests
+
+### Fixed
+
+- Updated box.json type to boxlang-modules so it installs correctly in BoxLang
+
+## [1.3.0] - 2025-10-14
+
+### Added
+
 - Added new `onFTPError` interception point for handling FTP errors globally
 - Added supplier lambdas for events and performance
 - Updated to use nonConcurrent Structs for better performance for announcements
