@@ -346,7 +346,7 @@ public class SFTPConnection extends BaseFTPConnection {
 		try {
 			return sftpChannel.pwd();
 		} catch ( SftpException e ) {
-			throw new BoxIOException( e );
+			throw new BoxIOException( new IOException( "Error getting working directory: " + e.getMessage(), e ) );
 		}
 	}
 
@@ -366,7 +366,7 @@ public class SFTPConnection extends BaseFTPConnection {
 			updateStatus( 0, "Directory changed successfully" );
 			return this;
 		} catch ( SftpException e ) {
-			throw new BoxIOException( e );
+			throw new BoxIOException( new IOException( "Error changing directory: " + e.getMessage(), e ) );
 		}
 	}
 
@@ -385,7 +385,7 @@ public class SFTPConnection extends BaseFTPConnection {
 			this.logger.info( "SFTP connection [{}] closed", this.name );
 		} catch ( Exception e ) {
 			this.logger.error( "Error while closing SFTP connection: " + e.getMessage() );
-			throw new BoxIOException( e );
+			throw new BoxIOException( new IOException( "Error closing SFTP connection: " + e.getMessage(), e ) );
 		}
 	}
 
@@ -534,7 +534,7 @@ public class SFTPConnection extends BaseFTPConnection {
 		} catch ( SftpException e ) {
 			this.logger.error( "Error listing directory: " + e.getMessage() );
 			updateStatus( e.id, e.getMessage() );
-			throw new BoxIOException( e );
+			throw new BoxIOException( new IOException( "Error listing directory: " + e.getMessage(), e ) );
 		}
 	}
 
@@ -577,7 +577,7 @@ public class SFTPConnection extends BaseFTPConnection {
 			    "secure", true
 			);
 		} catch ( SftpException e ) {
-			throw new BoxIOException( e );
+			throw new BoxIOException( new IOException( "Error getting metadata: " + e.getMessage(), e ) );
 		}
 	}
 
