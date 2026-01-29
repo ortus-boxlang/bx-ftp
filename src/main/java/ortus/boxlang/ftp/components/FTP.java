@@ -108,19 +108,23 @@ public class FTP extends Component {
 		    // The existing file to rename. Required for actions: renameFile
 		    new Attribute( FTPKeys.existing, "string" ),
 		    // failIfExists (true) - If a local file with same name exists, should it be overwritten with action = getFile. Default is true
-		    new Attribute( FTPKeys.failIfExists, "boolean", true )
+		    new Attribute( FTPKeys.failIfExists, "boolean", true ),
+		    // SFTP-specific attributes
+		    // secure (false) - FTP or SFTP if true
+		    new Attribute( FTPKeys.secure, "boolean", false ),
+		    // fingerprint - fingerprint of the server's public key for SFTP
+		    new Attribute( FTPKeys.fingerprint, "string" ),
+		    // key - absolute path to private key file for SFTP
+		    new Attribute( FTPKeys.key, "string" ),
+		    // passphrase - passphrase for private key for SFTP
+		    new Attribute( FTPKeys.passphrase, "string" )
 
 			// Pending Attributes, not sure if we need to do them.
 			// ASCIIExtensionList - Delimited list of file extensions that force ASCII transfer mode, if transferMode = "auto".
-			// proxyServer - name of the proxy server to use
 			// systemType - windows or unix
 			// transferMode - auto, ascii, binary
 			// retrycount (1) - Number of times to retry an operation
-			// passphrase - passphrase for private key
-			// key - absolute path to private key file
-			// fingerprint - fingerprint of the server's public key
-			// bufferSize - Buffer sie in bytes
-			// secure (false) - FTP or SFTP if true
+			// bufferSize - Buffer size in bytes
 		};
 		this.logger			= ftpService.getLogger();
 	}
@@ -169,7 +173,7 @@ public class FTP extends Component {
 	 *
 	 */
 	public BodyResult _invoke( IBoxContext context, IStruct attributes, ComponentBody body, IStruct executionState ) {
-		FTPConnection	ftpConnection	= findOrInitializeConnection( context, attributes );
+		IFTPConnection	ftpConnection	= findOrInitializeConnection( context, attributes );
 		FTPResult		ftpResult		= new FTPResult( ftpConnection );
 		String			action			= attributes.getAsString( Key.action ).toLowerCase();
 		Object			returnValue		= null;
@@ -239,8 +243,8 @@ public class FTP extends Component {
 					    .changeDir( attributes.getAsString( Key.directory ) )
 					    .listdir(
 					        attributes.getAsString( Key.returnType ).equalsIgnoreCase( "query" )
-					            ? FTPConnection.ReturnType.QUERY
-					            : FTPConnection.ReturnType.ARRAY
+					            ? IFTPConnection.ReturnType.QUERY
+					            : IFTPConnection.ReturnType.ARRAY
 					    );
 					returnValue = files;
 					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
@@ -343,7 +347,7 @@ public class FTP extends Component {
 	 *
 	 * @return The FTP connection
 	 */
-	private FTPConnection findOrInitializeConnection( IBoxContext context, IStruct attributes ) {
+	private IFTPConnection findOrInitializeConnection( IBoxContext context, IStruct attributes ) {
 		String connectionName = attributes.getAsString( FTPKeys.connection ).trim();
 		return this.ftpService.getOrBuildConnection( Key.of( connectionName ) );
 	}

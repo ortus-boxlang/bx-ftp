@@ -47,28 +47,7 @@ import ortus.boxlang.runtime.types.util.BLCollector;
  * This class is a wrapper around the Apache Commons Net FTPClient class. It
  * provides a simplified interface for working with FTP servers.
  */
-public class FTPConnection {
-
-	/**
-	 * --------------------------------------------------------------------------
-	 * Defaults
-	 * --------------------------------------------------------------------------
-	 */
-
-	public static final int			DEFAULT_PORT				= 21;
-	public static final boolean		DEFAULT_PASSIVE				= false;
-	public static final String		DEFAULT_USERNAME			= "anonymous";
-	public static final String		DEFAULT_PASSWORD			= "anonymous";
-	public static final boolean		DEFAULT_STOP_ON_ERROR		= true;
-	public static final int			DEFAULT_PROXY_SERVER_PORT	= 1080;
-	// In Seconds
-	public static final Duration	DEFAULT_TIMEOUT				= Duration.ofSeconds( 30 );
-
-	// Enum for return types: query and array
-	public enum ReturnType {
-		QUERY,
-		ARRAY
-	}
+public class FTPConnection extends BaseFTPConnection {
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -82,27 +61,6 @@ public class FTPConnection {
 	private FTPClient		client		= new FTPClient();
 
 	/**
-	 * If true, an exception will be thrown if an error occurs. If false, the
-	 * error will be ignored.
-	 */
-	private boolean			stopOnError	= DEFAULT_STOP_ON_ERROR;
-
-	/**
-	 * The name of the connection.
-	 */
-	private Key				name;
-
-	/**
-	 * The username for the connection.
-	 */
-	private String			username;
-
-	/**
-	 * The BoxLang logger to use
-	 */
-	private BoxLangLogger	logger;
-
-	/**
 	 * --------------------------------------------------------------------------
 	 * Constructors
 	 * --------------------------------------------------------------------------
@@ -111,11 +69,11 @@ public class FTPConnection {
 	/**
 	 * Build a Connection
 	 *
-	 * @param name The name of the connection
+	 * @param name   The name of the connection
+	 * @param logger The BoxLang logger to use
 	 */
 	public FTPConnection( Key name, BoxLangLogger logger ) {
-		this.name	= name;
-		this.logger	= logger;
+		super( name, logger );
 	}
 
 	/**
@@ -136,9 +94,12 @@ public class FTPConnection {
 	 * @param timeout     The timeout in seconds as a Duration
 	 * @param proxyServer The proxy server to use, if not null or empty. Example: 'localhost', 'test.myproxy.com:8080'
 	 *
+	 * @return This connection for chaining
+	 *
 	 * @throws IOException If an error occurs while connecting
 	 */
-	public FTPConnection open( String server,
+	@Override
+	public IFTPConnection open( String server,
 	    Integer port,
 	    String username,
 	    String password,
@@ -207,13 +168,14 @@ public class FTPConnection {
 	 * Retrieve a file from the FTP server and write it out to a local file.
 	 *
 	 * @param remoteFile   The name of the file to copy
-	 * @param localFile    The path of hte file to save
+	 * @param localFile    The path of the file to save
 	 * @param failIfExists If true, the file will not be copied if it already exists
 	 *
-	 * @throws IOException If an error occurs while copying the file
-	 *
 	 * @return True if the file was copied, false otherwise
+	 *
+	 * @throws IOException If an error occurs while copying the file
 	 */
+	@Override
 	public boolean getFile( String remoteFile, String localFile, boolean failIfExists ) throws IOException {
 		java.io.File	targetFile	= new java.io.File( localFile );
 		boolean			result		= false;
@@ -238,11 +200,12 @@ public class FTPConnection {
 	 * @param localFile  The file path of the local file you want to copy
 	 * @param remoteFile The name of the remote file you want to create/update
 	 *
+	 * @return True if the file was copied, false otherwise
+	 *
 	 * @throws BoxRuntimeException If the local file does not exist, not a file, or cannot be read.
 	 * @throws IOException         If an error occurs while copying the file
-	 *
-	 * @return True if the file was copied, false otherwise
 	 */
+	@Override
 	public boolean putFile( String localFile, String remoteFile ) throws IOException {
 		java.io.File	targetFile	= ensureLocalFile( new java.io.File( localFile ) );
 		boolean			result		= false;
@@ -257,33 +220,13 @@ public class FTPConnection {
 	}
 
 	/**
-	 * Ensure that the local file exists, is a file, and can be read
-	 *
-	 * @param localFile The local file to check
-	 *
-	 * @throws BoxRuntimeException If the local file does not exist, not a file, or cannot be read.
-	 */
-	private File ensureLocalFile( File localFile ) {
-		// validations
-		if ( !localFile.exists() ) {
-			throw new BoxRuntimeException( "Error: Local file does not exist: " + localFile );
-		}
-		if ( !localFile.isFile() ) {
-			throw new BoxRuntimeException( "Error: Path is not a file: " + localFile );
-		}
-		if ( !localFile.canRead() ) {
-			throw new BoxRuntimeException( "Error: Cannot read the file: " + localFile );
-		}
-		return localFile;
-	}
-
-	/**
 	 * Remove a file on the FTP server
 	 *
 	 * @param remoteFile The name of the file you want to remove
 	 *
 	 * @return True if the file was removed, false otherwise
 	 */
+	@Override
 	public boolean remove( String remoteFile ) {
 		try {
 			return client.deleteFile( remoteFile );
@@ -295,8 +238,9 @@ public class FTPConnection {
 	/**
 	 * Return the most recent reply code from the FTP Server
 	 *
-	 * @return
+	 * @return The status code
 	 */
+	@Override
 	public int getStatusCode() {
 		return client.getReplyCode();
 	}
@@ -304,8 +248,9 @@ public class FTPConnection {
 	/**
 	 * Get the status text associated with the most recent reply from the FTP server
 	 *
-	 * @return
+	 * @return The status text
 	 */
+	@Override
 	public String getStatusText() {
 		return client.getReplyString();
 	}
@@ -314,7 +259,10 @@ public class FTPConnection {
 	 * Get the current selected working directory on the FTP server.
 	 *
 	 * @return The current working directory
+	 *
+	 * @throws IOException If an error occurs
 	 */
+	@Override
 	public String getWorkingDirectory() throws IOException {
 		return client.printWorkingDirectory();
 	}
@@ -324,18 +272,20 @@ public class FTPConnection {
 	 *
 	 * @param dirName The name of the folder/path you want to cd into
 	 *
-	 * @return FTPConnection for chaining
+	 * @return This connection for chaining
+	 *
+	 * @throws IOException If an error occurs
 	 */
-	public FTPConnection changeDir( String dirName ) throws IOException {
+	@Override
+	public IFTPConnection changeDir( String dirName ) throws IOException {
 		client.changeWorkingDirectory( dirName );
 		return this;
 	}
 
 	/**
 	 * Close the connection to the FTP server
-	 *
-	 * @throws BoxIOException If an error occurs while closing the connection
 	 */
+	@Override
 	public void close() {
 		try {
 			// Check if the connection is open or not first
@@ -355,6 +305,7 @@ public class FTPConnection {
 	 *
 	 * @return True if the connection is open, false otherwise
 	 */
+	@Override
 	public boolean isConnected() {
 		return this.client != null && this.client.isConnected();
 	}
@@ -362,9 +313,12 @@ public class FTPConnection {
 	/**
 	 * Set the stopOnError flag
 	 *
-	 * @param stopOnError
+	 * @param stopOnError Whether to stop on error
+	 *
+	 * @return This connection for chaining
 	 */
-	public FTPConnection setStopOnError( boolean stopOnError ) {
+	@Override
+	public IFTPConnection setStopOnError( boolean stopOnError ) {
 		this.stopOnError = stopOnError;
 		return this;
 	}
@@ -376,6 +330,7 @@ public class FTPConnection {
 	 *
 	 * @return If the directory was created or not
 	 */
+	@Override
 	public boolean createDir( String dirName ) {
 		try {
 			return client.makeDirectory( dirName );
@@ -385,13 +340,14 @@ public class FTPConnection {
 	}
 
 	/**
-	 * Rename a file or diretory on the FTP server
+	 * Rename a file or directory on the FTP server
 	 *
 	 * @param existing The name of the file/directory you want to rename
 	 * @param newName  The new name of the file/directory
 	 *
 	 * @return If the rename was successful or not
 	 */
+	@Override
 	public Boolean rename( String existing, String newName ) {
 		try {
 			return client.rename( existing, newName );
@@ -405,8 +361,9 @@ public class FTPConnection {
 	 *
 	 * @param path The path to the file you want to check
 	 *
-	 * @return Boolean
+	 * @return True if the file exists, false otherwise
 	 */
+	@Override
 	public Boolean existsFile( String path ) {
 
 		if ( path.equals( "/" ) ) {
@@ -437,7 +394,10 @@ public class FTPConnection {
 	 * @param dirName The name of the directory you want to check
 	 *
 	 * @return True if the directory exists, false otherwise
+	 *
+	 * @throws IOException If an error occurs
 	 */
+	@Override
 	public Boolean existsDir( String dirName ) throws IOException {
 		String pwd = null;
 		try {
@@ -460,6 +420,7 @@ public class FTPConnection {
 	 *
 	 * @return True if the directory was removed, false otherwise
 	 */
+	@Override
 	public boolean removeDir( String dirName ) {
 		try {
 			return client.removeDirectory( dirName );
@@ -471,8 +432,10 @@ public class FTPConnection {
 	/**
 	 * Handle an error by throwing an exception if stopOnError is true and
 	 * looking for a positive completion code.
+	 *
+	 * @return This connection for chaining
 	 */
-	private FTPConnection handleError() {
+	private IFTPConnection handleError() {
 
 		if ( !FTPReply.isPositiveCompletion( client.getReplyCode() ) && this.stopOnError ) {
 			throw new BoxRuntimeException( "FTP operation error: " + client.getReplyString() );
@@ -484,12 +447,14 @@ public class FTPConnection {
 	/**
 	 * List the contents of the current directory
 	 *
-	 * @param returnType The return type of the listing
-	 *
-	 * @throws BoxRuntimeException If an error occurs while listing the directory
+	 * @param returntype The return type of the listing
 	 *
 	 * @return The contents of the directory as a Query or an Array of Structs
+	 *
+	 * @throws BoxRuntimeException If an error occurs while listing the directory
+	 * @throws IOException         If an I/O error occurs
 	 */
+	@Override
 	public Object listdir( ReturnType returntype ) throws IOException {
 		FTPFile[]	files		= this.client.listFiles();
 		String		systemType	= this.client.getSystemType().toUpperCase();
@@ -534,10 +499,11 @@ public class FTPConnection {
 	 * <li>passive</li>
 	 * </ul>
 	 *
-	 * @throws BoxIOException If an error occurs while getting the metadata.
-	 *
 	 * @return The metadata of the connection as a struct. If the connection is not open, an empty struct is returned.
+	 *
+	 * @throws BoxIOException If an error occurs while getting the metadata.
 	 */
+	@Override
 	public IStruct getMetadata() {
 		try {
 			return Struct.of(
@@ -552,19 +518,12 @@ public class FTPConnection {
 			    "status", isConnected() ? this.client.getStatus() : "closed",
 			    "systemName", isConnected() ? this.client.getSystemType() : "",
 			    "user", this.username,
-			    "workingDirectory", isConnected() ? this.client.printWorkingDirectory() : ""
+			    "workingDirectory", isConnected() ? this.client.printWorkingDirectory() : "",
+			    "secure", false
 			);
 		} catch ( IOException e ) {
 			throw new BoxIOException( e );
 		}
-	}
-
-	/**
-	 * A string representation of the connection.
-	 */
-	@Override
-	public String toString() {
-		return getMetadata().toString();
 	}
 
 	/**

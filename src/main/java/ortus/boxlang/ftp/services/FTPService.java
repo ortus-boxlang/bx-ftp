@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import ortus.boxlang.ftp.FTPConnection;
+import ortus.boxlang.ftp.IFTPConnection;
 import ortus.boxlang.ftp.FTPKeys;
 import ortus.boxlang.runtime.BoxRuntime;
 import ortus.boxlang.runtime.logging.BoxLangLogger;
@@ -37,7 +38,7 @@ public class FTPService extends BaseService {
 	/**
 	 * Concurrent map that stores all FTP connections
 	 */
-	private final ConcurrentMap<Key, FTPConnection>	ftpConnections		= new ConcurrentHashMap<>();
+	private final ConcurrentMap<Key, IFTPConnection>	ftpConnections		= new ConcurrentHashMap<>();
 
 	/**
 	 * The main FTP logger
@@ -123,7 +124,7 @@ public class FTPService extends BaseService {
 	 *
 	 * @return The FTPConnection that was found or created
 	 */
-	public FTPConnection getOrBuildConnection( Key name ) {
+	public IFTPConnection getOrBuildConnection( Key name ) {
 		return this.ftpConnections.computeIfAbsent( name, key -> new FTPConnection( name, getLogger() ) );
 	}
 
@@ -146,7 +147,7 @@ public class FTPService extends BaseService {
 	 * @return True if the connection was removed, false if it was not found
 	 */
 	public boolean removeConnection( Key name ) {
-		FTPConnection connection = this.ftpConnections.remove( name );
+		IFTPConnection connection = this.ftpConnections.remove( name );
 		if ( connection != null ) {
 			connection.close();
 			return true;
