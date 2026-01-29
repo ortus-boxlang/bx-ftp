@@ -122,10 +122,28 @@ public class FTPService extends BaseService {
 	 *
 	 * @param name The name of the connection
 	 *
-	 * @return The FTPConnection that was found or created
+	 * @return The FTPConnection that was found or created (defaults to FTP)
 	 */
 	public IFTPConnection getOrBuildConnection( Key name ) {
-		return this.ftpConnections.computeIfAbsent( name, key -> new FTPConnection( name, getLogger() ) );
+		return getOrBuildConnection( name, false );
+	}
+
+	/**
+	 * Get a connection or create a new one if it does not exist
+	 *
+	 * @param name   The name of the connection
+	 * @param secure Whether to create an SFTP connection (true) or FTP connection (false)
+	 *
+	 * @return The IFTPConnection that was found or created
+	 */
+	public IFTPConnection getOrBuildConnection( Key name, boolean secure ) {
+		return this.ftpConnections.computeIfAbsent( name, key -> {
+			if ( secure ) {
+				return new ortus.boxlang.ftp.SFTPConnection( name, getLogger() );
+			} else {
+				return new ortus.boxlang.ftp.FTPConnection( name, getLogger() );
+			}
+		} );
 	}
 
 	/**
