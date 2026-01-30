@@ -86,7 +86,7 @@ public class SFTPTest extends BaseIntegrationTest {
 					port="#variables.sftpPort#"
 					secure="true"
 					result="myResult"/>
-
+				<bx:set sftpMeta = sftpConn.getMetadata()>
 				<bx:script>
 					println( sftpConn );
 					println( myResult )
@@ -100,9 +100,8 @@ public class SFTPTest extends BaseIntegrationTest {
 		IStruct myResult = ( IStruct ) variables.get( "myResult" );
 		assertThat( myResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
 
-		// Verify it's an SFTP connection
-		IStruct	conn	= variables.getAsStruct( Key.of( "sftpConn" ) );
-		IStruct	metadata	= ( IStruct ) conn.invokeAssociatedMethod( context, Key.of( "getMetadata" ), new Object[] {} );
+		// Verify it's an SFTP connection by checking the secure flag in metadata
+		IStruct	metadata	= variables.getAsStruct( Key.of( "sftpMeta" ) );
 		assertThat( metadata.getAsBoolean( Key.of( "secure" ) ) ).isTrue();
 	}
 
