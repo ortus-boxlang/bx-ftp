@@ -1338,25 +1338,35 @@ switch (ftpResult.statusCode) {
 
 ### Local Development Setup
 
-This module includes Docker configuration for local FTP server testing:
+This module includes Docker configuration for local FTP and SFTP server testing:
 
 ```bash
-# Start FTP test server
+# Copy Docker environment configuration
+cp src/test/resources/.env.docker src/test/resources/.env
+
+# Start FTP and SFTP test servers
 docker-compose up -d --build
 
 # Run tests
 ./gradlew test
 
-# Stop FTP server
+# Stop servers
 docker-compose down
 ```
 
-### Test Server Configuration
+### Test Server Configuration (Docker)
 
+**FTP Server:**
 - **Host**: localhost
 - **Control Port**: 2221
 - **Data Port**: 2220
 - **Passive Ports**: 10000-10010
+- **Username**: test_user
+- **Password**: testpass
+
+**SFTP Server:**
+- **Host**: localhost
+- **Port**: 2222
 - **Username**: test_user
 - **Password**: testpass
 
@@ -1391,10 +1401,13 @@ docker-compose up -d
 
 ### Testing with Docker
 
-The included Docker setup provides a consistent FTP testing environment:
+The included Docker setup provides a consistent FTP/SFTP testing environment:
 
 ```bash
-# Start FTP server with specific configuration
+# Copy Docker-specific environment configuration
+cp src/test/resources/.env.docker src/test/resources/.env
+
+# Start FTP and SFTP servers with specific configuration
 docker-compose up -d --build
 
 # View logs
@@ -1403,9 +1416,17 @@ docker-compose logs -f
 # Stop and remove containers
 docker-compose down
 
-# Force recreate (after vsftpd.conf changes)
+# Force recreate (after config changes)
 docker-compose up -d --build --force-recreate
 ```
+
+**Docker Port Mapping**:
+- FTP Control: `2221` (mapped from container port 21)
+- FTP Data: `2220` (mapped from container port 20)
+- SFTP: `2222` (mapped from container port 22)
+- FTP Passive: `10000-10010`
+
+**CI Environment**: Tests in GitHub Actions use standard ports (21 for FTP, 22 for SFTP) as servers run directly on the Ubuntu runner. The `.env.example` file uses these standard ports by default.
 
 **Important**: The `vsftpd.conf` file includes critical passive mode configuration:
 
