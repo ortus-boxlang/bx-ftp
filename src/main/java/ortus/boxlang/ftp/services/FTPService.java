@@ -21,9 +21,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import ortus.boxlang.ftp.FTPConnection;
-import ortus.boxlang.ftp.IFTPConnection;
 import ortus.boxlang.ftp.FTPKeys;
+import ortus.boxlang.ftp.IFTPConnection;
 import ortus.boxlang.runtime.BoxRuntime;
 import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
@@ -43,12 +42,12 @@ public class FTPService extends BaseService {
 	/**
 	 * The main FTP logger
 	 */
-	BoxLangLogger									logger;
+	BoxLangLogger										logger;
 
 	/**
 	 * Interception points for the service.
 	 */
-	private static final Key[]						INTERCEPTION_POINTS	= List.of(
+	private static final Key[]							INTERCEPTION_POINTS	= List.of(
 	    FTPKeys.onFTPConnectionOpen,
 	    FTPKeys.onFTPConnectionClose,
 	    FTPKeys.afterFTPCall,
