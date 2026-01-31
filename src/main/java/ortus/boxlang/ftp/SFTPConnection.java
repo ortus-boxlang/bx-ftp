@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
@@ -361,6 +362,9 @@ public class SFTPConnection extends BaseFTPConnection {
 	 */
 	@Override
 	public IFTPConnection changeDir( String dirName ) throws IOException {
+		if ( dirName == null || dirName.isBlank() ) {
+			throw new BoxIOException( new IOException( "Directory name is required" ) );
+		}
 		try {
 			sftpChannel.cd( dirName );
 			updateStatus( 226, "Directory changed successfully" );
@@ -492,6 +496,11 @@ public class SFTPConnection extends BaseFTPConnection {
 	 */
 	@Override
 	public boolean removeDir( String dirName ) {
+		if ( dirName == null || dirName.isBlank() ) {
+			updateStatus( 550, "Directory name is required" );
+			handleError();
+			return false;
+		}
 		try {
 			sftpChannel.rmdir( dirName );
 			updateStatus( 226, "Directory removed successfully" );
@@ -660,7 +669,7 @@ public class SFTPConnection extends BaseFTPConnection {
 		return Struct.of(
 		    Key._name, entry.getFilename(),
 		    FTPKeys.isDirectory, attrs.isDir(),
-		    FTPKeys.lastModified, DateTimeCaster.cast( attrs.getMTime() * 1000L ), // Convert seconds to milliseconds
+		    FTPKeys.lastModified, DateTimeCaster.cast( Instant.ofEpochMilli( attrs.getMTime() * 1000L ) ), // Convert seconds to milliseconds
 		    // Dumb ACF compatibility
 		    Key.length, attrs.getSize(),
 		    // End Dumb name

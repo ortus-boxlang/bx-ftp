@@ -17,7 +17,6 @@
  */
 package ortus.boxlang.ftp;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -278,6 +277,9 @@ public class FTPConnection extends BaseFTPConnection {
 	 */
 	@Override
 	public IFTPConnection changeDir( String dirName ) throws IOException {
+		if ( dirName == null || dirName.isBlank() ) {
+			throw new BoxIOException( new IOException( "Directory name is required" ) );
+		}
 		client.changeWorkingDirectory( dirName );
 		return this;
 	}

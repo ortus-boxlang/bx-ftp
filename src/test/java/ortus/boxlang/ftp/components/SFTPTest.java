@@ -20,6 +20,7 @@ package ortus.boxlang.ftp.components;
 import static com.google.common.truth.Truth.assertThat;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -101,7 +102,7 @@ public class SFTPTest extends BaseIntegrationTest {
 					secure="true" />
 				<bx:ftp action="listdir"
 					connection="sftpConn"
-					directory="/"
+				directory="."
 					name="result"/>
 				<bx:set println( result )>
 		    """,
@@ -114,9 +115,15 @@ public class SFTPTest extends BaseIntegrationTest {
 
 		Query			arr				= variables.getAsQuery( result );
 		List<String>	expectations	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
+		List<String>	actualNames		= new ArrayList<>();
 
 		for ( IStruct file : arr ) {
-			assertThat( file.get( Key._name ) ).isIn( expectations );
+			actualNames.add( file.getAsString( Key._name ) );
+		}
+
+		// Check that all expected files are present (allow extras from previous test runs)
+		for ( String expected : expectations ) {
+			assertThat( actualNames ).contains( expected );
 		}
 	}
 
@@ -127,7 +134,7 @@ public class SFTPTest extends BaseIntegrationTest {
 		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
-				<bx:ftp action="listdir" connection="sftpConn" directory="/" name="result" returnType="array"/>
+			<bx:ftp action="listdir" connection="sftpConn" directory="." name="result" returnType="array"/>
 				<bx:set println( result )>
 		    """,
 			context,
@@ -139,10 +146,16 @@ public class SFTPTest extends BaseIntegrationTest {
 
 		Array			arr				= variables.getAsArray( result );
 		List<String>	expectations	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
+		List<String>	actualNames		= new ArrayList<>();
 
 		for ( Object file : arr ) {
 			IStruct targetFile = ( IStruct ) file;
-			assertThat( targetFile.get( Key._name ) ).isIn( expectations );
+			actualNames.add( targetFile.getAsString( Key._name ) );
+		}
+
+		// Check that all expected files are present (allow extras from previous test runs)
+		for ( String expected : expectations ) {
+			assertThat( actualNames ).contains( expected );
 		}
 	}
 
@@ -153,10 +166,10 @@ public class SFTPTest extends BaseIntegrationTest {
 		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
-				<bx:ftp action="removeDir" item="new_folder" connection="sftpConn" stopOnError=false />
-				<bx:ftp action="createDir" new="new_folder" connection="sftpConn" stopOnError=true />
-				<bx:ftp action="listdir" connection="sftpConn" name="result"/>
-				<bx:ftp action="removeDir" item="new_folder" connection="sftpConn" stopOnError=false />
+			<bx:ftp action="removeDir" directory="new_folder" connection="sftpConn" stopOnError=false />
+			<bx:ftp action="createDir" new="new_folder" connection="sftpConn" stopOnError=true />
+			<bx:ftp action="listdir" connection="sftpConn" name="result"/>
+			<bx:ftp action="removeDir" directory="new_folder" connection="sftpConn" stopOnError=false />
 		    """,
 			context,
 			BoxSourceType.BOXTEMPLATE
@@ -175,9 +188,9 @@ public class SFTPTest extends BaseIntegrationTest {
 		runtime.executeSource(
 			"""
 				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true"/>
-				<bx:ftp action="removeDir" item="new_folder" connection="sftpConn" stopOnError=false />
-				<bx:ftp action="createDir" new="new_folder" connection="sftpConn" stopOnError=true />
-				<bx:ftp action="removeDir" item="new_folder" connection="sftpConn" stopOnError=true />
+			<bx:ftp action="removeDir" directory="new_folder" connection="sftpConn" stopOnError=false />
+			<bx:ftp action="createDir" new="new_folder" connection="sftpConn" stopOnError=true />
+			<bx:ftp action="removeDir" directory="new_folder" connection="sftpConn" stopOnError=true />
 				<bx:ftp action="listdir" connection="sftpConn" name="result"/>
 		    """,
 			context,

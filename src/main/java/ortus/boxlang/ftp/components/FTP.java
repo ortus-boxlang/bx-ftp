@@ -23,9 +23,9 @@ import java.util.Set;
 
 import ortus.boxlang.ftp.BaseFTPConnection;
 import ortus.boxlang.ftp.FTPConnection;
-import ortus.boxlang.ftp.IFTPConnection;
 import ortus.boxlang.ftp.FTPKeys;
 import ortus.boxlang.ftp.FTPResult;
+import ortus.boxlang.ftp.IFTPConnection;
 import ortus.boxlang.ftp.services.FTPService;
 import ortus.boxlang.runtime.components.Attribute;
 import ortus.boxlang.runtime.components.BoxComponent;
@@ -258,7 +258,7 @@ public class FTP extends Component {
 					returnValue = ftpConnection.createDir( attributes.getAsString( FTPKeys._new ) );
 					break;
 				case "removedir" :
-					String targetDirectory = attributes.getAsString( FTPKeys.directory );
+					String targetDirectory = attributes.containsKey( FTPKeys.directory ) ? attributes.getAsString( FTPKeys.directory ) : null;
 					// Legacy compatibility
 					if ( attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
 						targetDirectory = attributes.getAsString( Key.item );
@@ -266,8 +266,14 @@ public class FTP extends Component {
 					returnValue = ftpConnection.removeDir( targetDirectory );
 					break;
 				case "listdir" :
+					// Only change directory if explicitly specified
+					if ( attributes.containsKey( Key.directory ) ) {
+						String listDir = attributes.getAsString( Key.directory );
+						if ( listDir != null && !listDir.isBlank() ) {
+							ftpConnection.changeDir( listDir );
+						}
+					}
 					Object files = ftpConnection
-					    .changeDir( attributes.getAsString( Key.directory ) )
 					    .listdir(
 					        attributes.getAsString( Key.returnType ).equalsIgnoreCase( "query" )
 					            ? IFTPConnection.ReturnType.QUERY
