@@ -9,13 +9,13 @@
 
 > 📁 A comprehensive FTP client module for BoxLang that brings seamless file transfer capabilities to your applications!
 
-This module provides powerful FTP client functionality to the [BoxLang](https://boxlang.io) language, making it easy to connect to FTP servers, transfer files, and manage remote directories with minimal code.
+This module provides powerful FTP and SFTP client functionality to the [BoxLang](https://boxlang.io) language, making it easy to connect to FTP/SFTP servers, transfer files, and manage remote directories with minimal code.
 
 ## ✨ Features
 
 - 🌐 **FTP/FTPS/SFTP Support**: Connect to standard FTP, secure FTP, and SFTP servers
-- 📁 **Complete File Operations**: Upload, download, rename, and delete files
-- 📂 **Directory Management**: Create, remove, list, and navigate directories
+- 📁 **Complete File Operations**: Upload, download, rename, and delete files on both FTP and SFTP
+- 📂 **Directory Management**: Create, remove, rename, list, and navigate directories on both FTP and SFTP
 - 🔐 **Secure Connections**: Support for passive/active modes (FTP) and SSH key authentication (SFTP)
 - 🔑 **SSH Key Support**: SFTP with public/private key authentication and optional passphrases
 - 🎯 **Connection Pooling**: Named connections tracked globally via FTPService
@@ -502,6 +502,80 @@ bx:ftp
     directory="/temp/old-data";
 
 bx:ftp action="close" connection="sftpMgr";
+```
+
+#### 🏷️ SFTP File Rename Operations
+
+```java
+// Open SFTP connection
+bx:ftp
+    action="open"
+    connection="sftpRename"
+    server="sftp.example.com"
+    username="admin"
+    password="adminpass"
+    secure="true";
+
+// Rename a file
+bx:ftp
+    action="renamefile"
+    connection="sftpRename"
+    existing="/uploads/draft-report.pdf"
+    new="/uploads/final-report-2026.pdf"
+    result="renameResult";
+
+if (renameResult.returnValue) {
+    writeOutput("File renamed successfully via SFTP");
+}
+
+// Rename a directory
+bx:ftp
+    action="renamedir"
+    connection="sftpRename"
+    existing="/projects/old-project-name"
+    new="/projects/new-project-name"
+    result="dirRenameResult";
+
+if (dirRenameResult.returnValue) {
+    writeOutput("Directory renamed successfully via SFTP");
+}
+
+bx:ftp action="close" connection="sftpRename";
+```
+
+#### 🗑️ SFTP File Removal Operations
+
+```java
+// Open SFTP connection
+bx:ftp
+    action="open"
+    connection="sftpRemove"
+    server="sftp.example.com"
+    username="admin"
+    password="adminpass"
+    secure="true";
+
+// Remove a file
+bx:ftp
+    action="removefile"
+    connection="sftpRemove"
+    remoteFile="/temp/cache-file.tmp"
+    result="removeResult";
+
+if (removeResult.returnValue) {
+    writeOutput("File removed successfully via SFTP");
+} else {
+    writeOutput("Failed to remove file: #removeResult.errorText#");
+}
+
+// Alternative: use 'remove' action (alias)
+bx:ftp
+    action="remove"
+    connection="sftpRemove"
+    remoteFile="/logs/old-log.txt"
+    result="removeResult2";
+
+bx:ftp action="close" connection="sftpRemove";
 ```
 
 ## 📚 Available Actions
@@ -1357,6 +1431,7 @@ docker-compose down
 ### Test Server Configuration (Docker)
 
 **FTP Server:**
+
 - **Host**: localhost
 - **Control Port**: 2221
 - **Data Port**: 2220
@@ -1365,6 +1440,7 @@ docker-compose down
 - **Password**: testpass
 
 **SFTP Server:**
+
 - **Host**: localhost
 - **Port**: 2222
 - **Username**: test_user
@@ -1421,6 +1497,7 @@ docker-compose up -d --build --force-recreate
 ```
 
 **Docker Port Mapping**:
+
 - FTP Control: `2221` (mapped from container port 21)
 - FTP Data: `2220` (mapped from container port 20)
 - SFTP: `2222` (mapped from container port 22)
