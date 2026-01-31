@@ -58,7 +58,7 @@ public class FTPConnection extends BaseFTPConnection {
 	/**
 	 * The FTPClient object used to communicate with the server.
 	 */
-	private FTPClient		client		= new FTPClient();
+	private FTPClient client = new FTPClient();
 
 	/**
 	 * --------------------------------------------------------------------------
