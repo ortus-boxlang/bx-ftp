@@ -49,6 +49,7 @@ dependencies {
 	implementation 'com.jcraft:jsch:0.1.55'
 
 	// Test Frameworks
+	testImplementation 'io.github.cdimascio:dotenv-java:3.2.0'
 	testImplementation "org.junit.jupiter:junit-jupiter:6.+"
 	testImplementation "org.mockito:mockito-core:5.+"
 	testImplementation "com.google.truth:truth:1.+"

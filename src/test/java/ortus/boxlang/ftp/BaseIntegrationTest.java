@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import ortus.boxlang.runtime.BoxRuntime;
 import ortus.boxlang.runtime.context.IBoxContext;
 import ortus.boxlang.runtime.context.ScriptingRequestBoxContext;
@@ -35,6 +36,9 @@ import ortus.boxlang.runtime.services.ModuleService;
  */
 public abstract class BaseIntegrationTest {
 
+	protected static Dotenv					dotenv		= Dotenv.configure()
+	    .directory( "src/test/resources" )
+	    .load();
 	protected static BoxRuntime				runtime;
 	protected static ModuleService			moduleService;
 	protected static ModuleRecord			moduleRecord;
@@ -71,6 +75,7 @@ public abstract class BaseIntegrationTest {
 			    .register( context )
 			    .activate( context );
 		} else {
+			moduleRecord = moduleService.getRegistry().get( moduleName );
 			System.out.println( "Module already loaded: " + moduleName );
 		}
 	}

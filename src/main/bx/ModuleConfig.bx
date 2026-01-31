@@ -46,7 +46,7 @@ class {
 	/**
 	 * The module description
 	 */
-	this.description = "allows you to interact with FTP servers";
+	this.description = "This module provides FTP and SFTP capabilities to BoxLang applications.";
 
 	/**
 	 * The module web URL

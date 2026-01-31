@@ -70,20 +70,20 @@ jobs:
         run: |
           # Install OpenSSH server
           sudo apt install -y openssh-server
-          
+
           # Configure SSH for password authentication
           echo "PasswordAuthentication yes" | sudo tee -a /etc/ssh/sshd_config
           echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config
-          
+
           # Restart SSH service
           sudo systemctl restart ssh
           sudo systemctl status ssh
-          
+
           # Verify test_user can authenticate
           echo "SFTP Server is ready on port 22"
           sudo service --status-all
 
-      - name: Test Module
+      - name: Test ${{ matrix.ftpMode }} FTP Mode
         run: |
           ./gradlew downloadBoxLang
           # this is done in order to build the module structure before testing
