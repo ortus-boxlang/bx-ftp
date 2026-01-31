@@ -297,13 +297,13 @@ public class FTP extends Component {
 					    BooleanCaster.cast( attributes.get( FTPKeys.failIfExists ) )
 					);
 					break;
-				case "renameFile", "renameDir" :
+				case "renamefile", "renamedir" :
 					returnValue = ftpConnection.rename(
 					    attributes.getAsString( FTPKeys.existing ),
 					    attributes.getAsString( FTPKeys._new )
 					);
 					break;
-				case "remove", "removeFile" :
+				case "remove", "removefile" :
 					String targetFile = attributes.getAsString( FTPKeys.remoteFile );
 					// Legacy compatibility
 					if ( attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {

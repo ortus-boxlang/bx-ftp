@@ -541,4 +541,162 @@ public class FTPTest extends BaseIntegrationTest {
 			);
 		} );
 	}
+
+	@DisplayName( "It can rename a file" )
+	@Test
+	public void testRenameFile() {
+		// @formatter:off
+		// Clean up any leftover renamed file first
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="remove" connection="conn" item="file_renamed.txt" stopOnError="false"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="renamefile" connection="conn" existing="file_a.txt" new="file_renamed.txt" result="renameResult"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct renameResult = variables.getAsStruct( Key.of( "renameResult" ) );
+		assertThat( renameResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Verify file was renamed
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+		    <bx:ftp action="existsfile" connection="conn" remoteFile="file_renamed.txt" result="existsResult"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+
+		IStruct existsResult = variables.getAsStruct( Key.of( "existsResult" ) );
+		assertThat( existsResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Rename back for other tests
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+		    <bx:ftp action="renamefile" connection="conn" existing="file_renamed.txt" new="file_a.txt"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+	}
+
+	@DisplayName( "It can remove a file" )
+	@Test
+	public void testRemoveFile() {
+		// @formatter:off
+		// First create a test file
+		runtime.executeSource(
+			"""
+				<bx:set fileWrite( "test_remove.txt", "to be deleted" ) />
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="putfile" connection="conn" remoteFile="test_remove.txt" localFile="test_remove.txt"/>
+				<bx:set fileDelete( "test_remove.txt" ) />
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		// Now remove it
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="removefile" connection="conn" remoteFile="test_remove.txt" result="removeResult"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct removeResult = variables.getAsStruct( Key.of( "removeResult" ) );
+		assertThat( removeResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Verify file was deleted
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+		    <bx:ftp action="existsfile" connection="conn" remoteFile="test_remove.txt" result="existsResult"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+
+		IStruct existsResult = variables.getAsStruct( Key.of( "existsResult" ) );
+		assertThat( existsResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
+	}
+
+	@DisplayName( "It can rename a directory" )
+	@Test
+	public void testRenameDirectory() {
+		// @formatter:off
+		// Clean up any leftover directories first
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="removedir" connection="conn" directory="test_rename_dir" stopOnError="false"/>
+				<bx:ftp action="removedir" connection="conn" directory="test_renamed_dir" stopOnError="false"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		// First create a test directory
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="createdir" connection="conn" new="test_rename_dir"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		// Now rename it
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+				<bx:ftp action="renamedir" connection="conn" existing="test_rename_dir" new="test_renamed_dir" result="renameResult"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct renameResult = variables.getAsStruct( Key.of( "renameResult" ) );
+		assertThat( renameResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Verify directory was renamed
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+		    <bx:ftp action="existsdir" connection="conn" directory="test_renamed_dir" result="existsResult"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+
+		IStruct existsResult = variables.getAsStruct( Key.of( "existsResult" ) );
+		assertThat( existsResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Clean up
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="conn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.port#" passive="#(variables.ftpMode == 'passive')#" />
+		    <bx:ftp action="removedir" connection="conn" directory="test_renamed_dir"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+	}
 }

@@ -413,4 +413,162 @@ public class SFTPTest extends BaseIntegrationTest {
 		    BoxSourceType.BOXTEMPLATE
 		);
 	}
+
+	@DisplayName( "It can rename a file on SFTP server" )
+	@Test
+	public void testRenameFile() {
+		// @formatter:off
+		// Clean up any leftover renamed file first
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="remove" connection="sftpConn" item="file_renamed_sftp.txt" stopOnError="false"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="renamefile" connection="sftpConn" existing="file_a.txt" new="file_renamed_sftp.txt" result="renameResult"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct renameResult = variables.getAsStruct( Key.of( "renameResult" ) );
+		assertThat( renameResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Verify file was renamed
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+		    <bx:ftp action="existsfile" connection="sftpConn" remoteFile="file_renamed_sftp.txt" result="existsResult"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+
+		IStruct existsResult = variables.getAsStruct( Key.of( "existsResult" ) );
+		assertThat( existsResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Rename back for other tests
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+		    <bx:ftp action="renamefile" connection="sftpConn" existing="file_renamed_sftp.txt" new="file_a.txt"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+	}
+
+	@DisplayName( "It can remove a file from SFTP server" )
+	@Test
+	public void testRemoveFile() {
+		// @formatter:off
+		// First create a test file
+		runtime.executeSource(
+			"""
+				<bx:set fileWrite( "test_remove_sftp.txt", "to be deleted" ) />
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="putfile" connection="sftpConn" remoteFile="test_remove_sftp.txt" localFile="test_remove_sftp.txt"/>
+				<bx:set fileDelete( "test_remove_sftp.txt" ) />
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		// Now remove it
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="removefile" connection="sftpConn" remoteFile="test_remove_sftp.txt" result="removeResult"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct removeResult = variables.getAsStruct( Key.of( "removeResult" ) );
+		assertThat( removeResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Verify file was deleted
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+		    <bx:ftp action="existsfile" connection="sftpConn" remoteFile="test_remove_sftp.txt" result="existsResult"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+
+		IStruct existsResult = variables.getAsStruct( Key.of( "existsResult" ) );
+		assertThat( existsResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
+	}
+
+	@DisplayName( "It can rename a directory on SFTP server" )
+	@Test
+	public void testRenameDirectory() {
+		// @formatter:off
+		// Clean up any leftover directories first
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="removedir" connection="sftpConn" directory="test_rename_dir_sftp" stopOnError="false"/>
+				<bx:ftp action="removedir" connection="sftpConn" directory="test_renamed_dir_sftp" stopOnError="false"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		// First create a test directory
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="createdir" connection="sftpConn" new="test_rename_dir_sftp"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		// Now rename it
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="renamedir" connection="sftpConn" existing="test_rename_dir_sftp" new="test_renamed_dir_sftp" result="renameResult"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct renameResult = variables.getAsStruct( Key.of( "renameResult" ) );
+		assertThat( renameResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Verify directory was renamed
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+		    <bx:ftp action="existsdir" connection="sftpConn" directory="test_renamed_dir_sftp" result="existsResult"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+
+		IStruct existsResult = variables.getAsStruct( Key.of( "existsResult" ) );
+		assertThat( existsResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
+
+		// Clean up
+		runtime.executeSource(
+		    """
+		    <bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+		    <bx:ftp action="removedir" connection="sftpConn" directory="test_renamed_dir_sftp"/>
+		      """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
+		);
+	}
 }
