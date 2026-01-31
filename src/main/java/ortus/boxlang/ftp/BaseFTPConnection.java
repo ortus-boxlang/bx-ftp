@@ -39,15 +39,15 @@ public abstract class BaseFTPConnection implements IFTPConnection {
 	 * --------------------------------------------------------------------------
 	 */
 
-	public static final int			DEFAULT_PORT			= 21;
-	public static final int			DEFAULT_SFTP_PORT		= 22;
-	public static final boolean		DEFAULT_PASSIVE			= false;
-	public static final String		DEFAULT_USERNAME		= "anonymous";
-	public static final String		DEFAULT_PASSWORD		= "anonymous";
-	public static final boolean		DEFAULT_STOP_ON_ERROR	= true;
+	public static final int			DEFAULT_PORT				= 21;
+	public static final int			DEFAULT_SFTP_PORT			= 22;
+	public static final boolean		DEFAULT_PASSIVE				= false;
+	public static final String		DEFAULT_USERNAME			= "anonymous";
+	public static final String		DEFAULT_PASSWORD			= "anonymous";
+	public static final boolean		DEFAULT_STOP_ON_ERROR		= true;
 	public static final int			DEFAULT_PROXY_SERVER_PORT	= 1080;
 	// In Seconds
-	public static final Duration	DEFAULT_TIMEOUT			= Duration.ofSeconds( 30 );
+	public static final Duration	DEFAULT_TIMEOUT				= Duration.ofSeconds( 30 );
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -59,32 +59,32 @@ public abstract class BaseFTPConnection implements IFTPConnection {
 	 * If true, an exception will be thrown if an error occurs. If false, the
 	 * error will be ignored.
 	 */
-	protected boolean			stopOnError	= DEFAULT_STOP_ON_ERROR;
+	protected boolean				stopOnError					= DEFAULT_STOP_ON_ERROR;
 
 	/**
 	 * The name of the connection.
 	 */
-	protected Key				name;
+	protected Key					name;
 
 	/**
 	 * The username for the connection.
 	 */
-	protected String			username;
+	protected String				username;
 
 	/**
 	 * The BoxLang logger to use
 	 */
-	protected BoxLangLogger		logger;
+	protected BoxLangLogger			logger;
 
 	/**
 	 * The last status code from the server
 	 */
-	protected int				statusCode	= 0;
+	protected int					statusCode					= 0;
 
 	/**
 	 * The last status text from the server
 	 */
-	protected String			statusText	= "";
+	protected String				statusText					= "";
 
 	/**
 	 * --------------------------------------------------------------------------
