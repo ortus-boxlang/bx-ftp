@@ -20,12 +20,9 @@ package ortus.boxlang.ftp.components;
 import static com.google.common.truth.Truth.assertThat;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,32 +41,16 @@ public class SFTPTest extends BaseIntegrationTest {
 
 	static Key myResultKey = new Key( "myResult" );
 
-	@BeforeAll
-	public static void setUp() {
-		// Any global setup
-	}
-
 	@BeforeEach
 	@Override
 	public void setupEach() {
 		super.setupEach();
-		try {
-			String	dir		= System.getProperty( "user.dir" );
-			String	envFile	= "./resources/.env";
-
-			if ( dir.endsWith( "bx-ftp" ) ) {
-				envFile = dir + "/src/test/resources/.env";
-			}
-			System.getProperties().load( new FileInputStream( envFile ) );
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
 
 		// Setup SFTP connection variables
-		variables.put( "username", System.getProperty( "BOXLANG_FTP_USERNAME" ) );
-		variables.put( "password", System.getProperty( "BOXLANG_FTP_PASSWORD" ) );
-		variables.put( "server", System.getProperty( "BOXLANG_FTP_SERVER", "localhost" ) );
-		variables.put( "sftpPort", System.getProperty( "BOXLANG_SFTP_PORT", "2222" ) );
+		variables.put( "username", dotenv.get( "BOXLANG_FTP_USERNAME" ) );
+		variables.put( "password", dotenv.get( "BOXLANG_FTP_PASSWORD" ) );
+		variables.put( "server", dotenv.get( "BOXLANG_FTP_SERVER", "localhost" ) );
+		variables.put( "sftpPort", dotenv.get( "BOXLANG_SFTP_PORT", "2222" ) );
 	}
 
 	@DisplayName( "It can connect to an SFTP server with password" )
@@ -98,10 +79,10 @@ public class SFTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		IStruct myResult = ( IStruct ) variables.get( "myResult" );
-		assertThat( myResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( myResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 
 		// Verify it's an SFTP connection by checking the secure flag in metadata
-		IStruct	metadata	= variables.getAsStruct( Key.of( "sftpMeta" ) );
+		IStruct metadata = variables.getAsStruct( Key.of( "sftpMeta" ) );
 		assertThat( metadata.getAsBoolean( Key.of( "secure" ) ) ).isTrue();
 	}
 
@@ -254,7 +235,7 @@ public class SFTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
-		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 	}
 
 	@DisplayName( "It can check if a file exists on SFTP server" )
@@ -272,7 +253,7 @@ public class SFTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
-		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
 	}
 
@@ -291,7 +272,7 @@ public class SFTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
-		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
 	}
 
@@ -310,7 +291,7 @@ public class SFTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
-		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isTrue();
 	}
 
@@ -344,7 +325,7 @@ public class SFTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
-		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 		assertThat(
 		    variables.getAsBoolean( Key.of( "isOpen" ) )
 		).isFalse();
@@ -380,7 +361,7 @@ public class SFTPTest extends BaseIntegrationTest {
 			// @formatter:on
 
 			IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
-			assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+			assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 			assertThat( variables.getAsBoolean( Key.result ) ).isTrue();
 		} finally {
 			File file = new File( "something_sftp.txt" );
@@ -407,7 +388,7 @@ public class SFTPTest extends BaseIntegrationTest {
 		// @formatter:on
 
 		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
-		assertThat( ftpResult.getAsBoolean( Key.of( "succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
 
 		// Clean up remote file
 		runtime.executeSource(

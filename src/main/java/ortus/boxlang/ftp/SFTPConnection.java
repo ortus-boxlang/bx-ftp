@@ -29,12 +29,12 @@ import java.util.Properties;
 import java.util.Vector;
 
 import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
 
 import ortus.boxlang.runtime.dynamic.casters.DateTimeCaster;
 import ortus.boxlang.runtime.logging.BoxLangLogger;
@@ -71,27 +71,27 @@ public class SFTPConnection extends BaseFTPConnection {
 	/**
 	 * The JSch session object used to connect to the server.
 	 */
-	private Session			session;
+	private Session		session;
 
 	/**
 	 * The SFTP channel used to communicate with the server.
 	 */
-	private ChannelSftp		sftpChannel;
+	private ChannelSftp	sftpChannel;
 
 	/**
 	 * The server address
 	 */
-	private String			server;
+	private String		server;
 
 	/**
 	 * The server port
 	 */
-	private Integer			port;
+	private Integer		port;
 
 	/**
 	 * The fingerprint for host key verification
 	 */
-	private String			fingerprint;
+	private String		fingerprint;
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -136,10 +136,10 @@ public class SFTPConnection extends BaseFTPConnection {
 	    throws IOException {
 		// Verify that the required parameters are present or default them
 		Objects.requireNonNull( server, "Server is required" );
-		port		= Objects.requireNonNullElse( port, DEFAULT_SFTP_PORT );
-		username	= Objects.requireNonNullElse( username, DEFAULT_USERNAME );
-		password	= Objects.requireNonNullElse( password, DEFAULT_PASSWORD );
-		timeout		= Objects.requireNonNullElse( timeout, DEFAULT_TIMEOUT );
+		port			= Objects.requireNonNullElse( port, DEFAULT_SFTP_PORT );
+		username		= Objects.requireNonNullElse( username, DEFAULT_USERNAME );
+		password		= Objects.requireNonNullElse( password, DEFAULT_PASSWORD );
+		timeout			= Objects.requireNonNullElse( timeout, DEFAULT_TIMEOUT );
 
 		// Store for future reference
 		this.username	= username;
@@ -169,7 +169,7 @@ public class SFTPConnection extends BaseFTPConnection {
 			this.sftpChannel.connect();
 
 			this.logger.info( "SFTP connection [{}] opened.", this.name );
-			updateStatus( 0, "Connected" );
+			updateStatus( 226, "Connected" );
 
 		} catch ( JSchException e ) {
 			this.logger.error( "SFTP server connection failed: " + e.getMessage() );
@@ -200,9 +200,9 @@ public class SFTPConnection extends BaseFTPConnection {
 		// Verify that the required parameters are present or default them
 		Objects.requireNonNull( server, "Server is required" );
 		Objects.requireNonNull( privateKey, "Private key is required for key-based authentication" );
-		port		= Objects.requireNonNullElse( port, DEFAULT_SFTP_PORT );
-		username	= Objects.requireNonNullElse( username, DEFAULT_USERNAME );
-		timeout		= Objects.requireNonNullElse( timeout, DEFAULT_TIMEOUT );
+		port				= Objects.requireNonNullElse( port, DEFAULT_SFTP_PORT );
+		username			= Objects.requireNonNullElse( username, DEFAULT_USERNAME );
+		timeout				= Objects.requireNonNullElse( timeout, DEFAULT_TIMEOUT );
 
 		// Store for future reference
 		this.username		= username;
@@ -244,7 +244,7 @@ public class SFTPConnection extends BaseFTPConnection {
 			this.sftpChannel.connect();
 
 			this.logger.info( "SFTP connection [{}] opened with key authentication.", this.name );
-			updateStatus( 0, "Connected" );
+			updateStatus( 226, "Connected" );
 
 		} catch ( JSchException e ) {
 			this.logger.error( "SFTP server connection failed: " + e.getMessage() );
@@ -276,7 +276,7 @@ public class SFTPConnection extends BaseFTPConnection {
 
 		try ( OutputStream outputStream = new FileOutputStream( targetFile ) ) {
 			sftpChannel.get( remoteFile, outputStream );
-			updateStatus( 0, "File retrieved successfully" );
+			updateStatus( 226, "File retrieved successfully" );
 			return true;
 		} catch ( SftpException e ) {
 			this.logger.error( "Error retrieving file: " + e.getMessage() );
@@ -303,7 +303,7 @@ public class SFTPConnection extends BaseFTPConnection {
 
 		try ( FileInputStream inputStream = new FileInputStream( targetFile ) ) {
 			sftpChannel.put( inputStream, remoteFile );
-			updateStatus( 0, "File uploaded successfully" );
+			updateStatus( 226, "File uploaded successfully" );
 			return true;
 		} catch ( SftpException e ) {
 			this.logger.error( "Error uploading file: " + e.getMessage() );
@@ -324,7 +324,7 @@ public class SFTPConnection extends BaseFTPConnection {
 	public boolean remove( String remoteFile ) {
 		try {
 			sftpChannel.rm( remoteFile );
-			updateStatus( 0, "File removed successfully" );
+			updateStatus( 226, "File removed successfully" );
 			return true;
 		} catch ( SftpException e ) {
 			this.logger.error( "Error removing file: " + e.getMessage() );
@@ -363,7 +363,7 @@ public class SFTPConnection extends BaseFTPConnection {
 	public IFTPConnection changeDir( String dirName ) throws IOException {
 		try {
 			sftpChannel.cd( dirName );
-			updateStatus( 0, "Directory changed successfully" );
+			updateStatus( 226, "Directory changed successfully" );
 			return this;
 		} catch ( SftpException e ) {
 			throw new BoxIOException( new IOException( "Error changing directory: " + e.getMessage(), e ) );
@@ -411,7 +411,7 @@ public class SFTPConnection extends BaseFTPConnection {
 	public boolean createDir( String dirName ) {
 		try {
 			sftpChannel.mkdir( dirName );
-			updateStatus( 0, "Directory created successfully" );
+			updateStatus( 226, "Directory created successfully" );
 			return true;
 		} catch ( SftpException e ) {
 			this.logger.error( "Error creating directory: " + e.getMessage() );
@@ -433,7 +433,7 @@ public class SFTPConnection extends BaseFTPConnection {
 	public Boolean rename( String existing, String newName ) {
 		try {
 			sftpChannel.rename( existing, newName );
-			updateStatus( 0, "Rename successful" );
+			updateStatus( 226, "Rename successful" );
 			return true;
 		} catch ( SftpException e ) {
 			this.logger.error( "Error renaming: " + e.getMessage() );
@@ -494,7 +494,7 @@ public class SFTPConnection extends BaseFTPConnection {
 	public boolean removeDir( String dirName ) {
 		try {
 			sftpChannel.rmdir( dirName );
-			updateStatus( 0, "Directory removed successfully" );
+			updateStatus( 226, "Directory removed successfully" );
 			return true;
 		} catch ( SftpException e ) {
 			this.logger.error( "Error removing directory: " + e.getMessage() );
@@ -521,11 +521,11 @@ public class SFTPConnection extends BaseFTPConnection {
 			String			systemType	= "UNIX"; // SFTP servers are typically Unix-based
 
 			// Filter out . and ..
-			LsEntry[] files = entries.stream()
+			LsEntry[]		files		= entries.stream()
 			    .filter( entry -> !entry.getFilename().equals( "." ) && !entry.getFilename().equals( ".." ) )
 			    .toArray( LsEntry[]::new );
 
-			updateStatus( 0, "Directory listed successfully" );
+			updateStatus( 226, "Directory listed successfully" );
 
 			if ( returntype == ReturnType.ARRAY ) {
 				return filesToArray( files, systemType );
@@ -687,9 +687,9 @@ public class SFTPConnection extends BaseFTPConnection {
 	 * @return The mode of the file as an octal string
 	 */
 	public static String getMode( SftpATTRS attrs, String systemType ) {
-		int permissions = attrs.getPermissions();
+		int	permissions	= attrs.getPermissions();
 		// Extract only the permission bits (last 9 bits)
-		int mode = permissions & 0777;
+		int	mode		= permissions & 0777;
 		return String.format( "%03o", mode );
 	}
 }

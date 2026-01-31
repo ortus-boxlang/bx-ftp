@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- SFTP Support
+- Upgraded gradle
+- DotEnv support for tests
+- BoxLang 1.9 support
+
+### Fixed
+
+- Updated dependencies
+- Fixed Dockerfile due to issues when updating the package scripts for installing the ssh server
+
 ## [1.4.0] - 2025-11-21
 
 ### Added
