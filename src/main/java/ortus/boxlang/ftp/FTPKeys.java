@@ -44,6 +44,12 @@ public class FTPKeys {
 	public static final Key	timeout					= Key.of( "timeout" );
 	public static final Key	url						= Key.of( "url" );
 
+	// SFTP-specific keys
+	public static final Key	secure					= Key.of( "secure" );
+	public static final Key	fingerprint				= Key.of( "fingerprint" );
+	public static final Key	key						= Key.of( "key" );
+	public static final Key	passphrase				= Key.of( "passphrase" );
+
 	// Events
 	public static final Key	onFTPConnectionOpen		= Key.of( "onFTPConnectionOpen" );
 	public static final Key	onFTPConnectionClose	= Key.of( "onFTPConnectionClose" );

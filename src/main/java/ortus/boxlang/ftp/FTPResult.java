@@ -30,7 +30,7 @@ public class FTPResult {
 	/**
 	 * The FTP connection that was used to perform the operation.
 	 */
-	private FTPConnection	conn;
+	private IFTPConnection	conn;
 
 	/**
 	 * The return value of the operation.
@@ -49,7 +49,7 @@ public class FTPResult {
 	 *
 	 * @param conn The FTP connection.
 	 */
-	public FTPResult( FTPConnection conn ) {
+	public FTPResult( IFTPConnection conn ) {
 		super();
 		this.conn = conn;
 	}

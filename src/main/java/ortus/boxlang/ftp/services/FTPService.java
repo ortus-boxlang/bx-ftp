@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import ortus.boxlang.ftp.FTPConnection;
 import ortus.boxlang.ftp.FTPKeys;
+import ortus.boxlang.ftp.IFTPConnection;
 import ortus.boxlang.runtime.BoxRuntime;
 import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
@@ -37,17 +37,17 @@ public class FTPService extends BaseService {
 	/**
 	 * Concurrent map that stores all FTP connections
 	 */
-	private final ConcurrentMap<Key, FTPConnection>	ftpConnections		= new ConcurrentHashMap<>();
+	private final ConcurrentMap<Key, IFTPConnection>	ftpConnections		= new ConcurrentHashMap<>();
 
 	/**
 	 * The main FTP logger
 	 */
-	BoxLangLogger									logger;
+	BoxLangLogger										logger;
 
 	/**
 	 * Interception points for the service.
 	 */
-	private static final Key[]						INTERCEPTION_POINTS	= List.of(
+	private static final Key[]							INTERCEPTION_POINTS	= List.of(
 	    FTPKeys.onFTPConnectionOpen,
 	    FTPKeys.onFTPConnectionClose,
 	    FTPKeys.afterFTPCall,
@@ -121,10 +121,28 @@ public class FTPService extends BaseService {
 	 *
 	 * @param name The name of the connection
 	 *
-	 * @return The FTPConnection that was found or created
+	 * @return The FTPConnection that was found or created (defaults to FTP)
 	 */
-	public FTPConnection getOrBuildConnection( Key name ) {
-		return this.ftpConnections.computeIfAbsent( name, key -> new FTPConnection( name, getLogger() ) );
+	public IFTPConnection getOrBuildConnection( Key name ) {
+		return getOrBuildConnection( name, false );
+	}
+
+	/**
+	 * Get a connection or create a new one if it does not exist
+	 *
+	 * @param name   The name of the connection
+	 * @param secure Whether to create an SFTP connection (true) or FTP connection (false)
+	 *
+	 * @return The IFTPConnection that was found or created
+	 */
+	public IFTPConnection getOrBuildConnection( Key name, boolean secure ) {
+		return this.ftpConnections.computeIfAbsent( name, key -> {
+			if ( secure ) {
+				return new ortus.boxlang.ftp.SFTPConnection( name, getLogger() );
+			} else {
+				return new ortus.boxlang.ftp.FTPConnection( name, getLogger() );
+			}
+		} );
 	}
 
 	/**
@@ -146,7 +164,7 @@ public class FTPService extends BaseService {
 	 * @return True if the connection was removed, false if it was not found
 	 */
 	public boolean removeConnection( Key name ) {
-		FTPConnection connection = this.ftpConnections.remove( name );
+		IFTPConnection connection = this.ftpConnections.remove( name );
 		if ( connection != null ) {
 			connection.close();
 			return true;
