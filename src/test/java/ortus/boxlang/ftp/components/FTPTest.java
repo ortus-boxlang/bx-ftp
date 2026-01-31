@@ -21,8 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,22 +54,11 @@ public class FTPTest extends BaseIntegrationTest {
 	@Override
 	public void setupEach() {
 		super.setupEach();
-		try {
-			String	dir		= System.getProperty( "user.dir" );
-			String	envFile	= "./resources/.env";
 
-			if ( dir.endsWith( "bx-ftp" ) ) {
-				envFile = dir + "/src/test/resources/.env";
-			}
-			System.getProperties().load( new FileInputStream( envFile ) );
-		} catch ( IOException e ) {
-			e.printStackTrace();
-		}
-
-		variables.put( "username", System.getProperty( "BOXLANG_FTP_USERNAME" ) );
-		variables.put( "password", System.getProperty( "BOXLANG_FTP_PASSWORD" ) );
-		variables.put( "server", System.getProperty( "BOXLANG_FTP_SERVER", "localhost" ) );
-		variables.put( "port", System.getProperty( "BOXLANG_FTP_PORT", "21" ) );
+		variables.put( "username", dotenv.get( "BOXLANG_FTP_USERNAME" ) );
+		variables.put( "password", dotenv.get( "BOXLANG_FTP_PASSWORD" ) );
+		variables.put( "server", dotenv.get( "BOXLANG_FTP_SERVER", "localhost" ) );
+		variables.put( "port", dotenv.get( "BOXLANG_FTP_PORT", "21" ) );
 		// variables.put( "mode", FTPMode );
 		variables.put( "ftpMode", "passive" );
 	}
@@ -158,10 +145,14 @@ public class FTPTest extends BaseIntegrationTest {
 		assertThat( variables.get( result ) ).isInstanceOf( Query.class );
 
 		Query			arr				= variables.getAsQuery( result );
-		List<String>	expectations	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
+		List<String>	expectedFiles	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
+		List<String>	actualFileNames	= arr.stream()
+		    .map( file -> ( String ) file.get( Key._name ) )
+		    .toList();
 
-		for ( IStruct file : arr ) {
-			assertThat( file.get( Key._name ) ).isIn( expectations );
+		// Assert all expected files exist (ignore test artifacts from concurrent runs)
+		for ( String expectedFile : expectedFiles ) {
+			assertThat( actualFileNames ).contains( expectedFile );
 		}
 	}
 
@@ -184,11 +175,14 @@ public class FTPTest extends BaseIntegrationTest {
 		assertThat( variables.get( result ) ).isInstanceOf( Array.class );
 
 		Array			arr				= variables.getAsArray( result );
-		List<String>	expectations	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
+		List<String>	expectedFiles	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
+		List<String>	actualFileNames	= arr.stream()
+		    .map( file -> ( String ) ( ( IStruct ) file ).get( Key._name ) )
+		    .toList();
 
-		for ( Object file : arr ) {
-			IStruct targetFile = ( IStruct ) file;
-			assertThat( targetFile.get( Key._name ) ).isIn( expectations );
+		// Assert all expected files exist (ignore test artifacts from concurrent runs)
+		for ( String expectedFile : expectedFiles ) {
+			assertThat( actualFileNames ).contains( expectedFile );
 		}
 	}
 
