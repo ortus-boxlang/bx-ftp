@@ -1,11 +1,10 @@
 FROM ubuntu
 
-RUN apt update
-
-RUN export DEBIAN_FRONTEND=noninteractive
-
-# Install FTP and SSH servers
-RUN apt install -y vsftpd openssh-server
+# Update package lists and install FTP and SSH servers
+RUN apt-get update && \
+	DEBIAN_FRONTEND=noninteractive apt-get install -y vsftpd openssh-server && \
+	apt-get clean && \
+	rm -rf /var/lib/apt/lists/*
 
 # Create test user for FTP and SFTP
 RUN adduser test_user
@@ -21,6 +20,6 @@ RUN echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 RUN echo "Subsystem sftp /usr/lib/openssh/sftp-server" >> /etc/ssh/sshd_config
 
 # Startup script
-COPY ./run.sh /run.sh 
+COPY ./run.sh /run.sh
 
 CMD [ "sh", "/run.sh" ]
