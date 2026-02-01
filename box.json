@@ -1,5 +1,5 @@
 {
-	"name": "BoxLang FTP",
+	"name": "BoxLang FTP & SFTP Module",
 	"version": "@build.version@+@build.number@",
 	"location": "https://downloads.ortussolutions.com/ortussolutions/boxlang-modules/bx-ftp/@build.version@/bx-ftp-@build.version@.zip",
 	"author": "Ortus Solutions",
@@ -11,11 +11,12 @@
 	},
 	"bugs": "https://github.com/ortus-boxlang/bx-ftp/issues",
 	"slug": "bx-ftp",
-	"shortDescription": "FTP client functionality for BoxLang applications",
+	"shortDescription": "This BoxLang module provides FTP and SFTP file transfer capabilities.",
 	"type": "boxlang-modules",
 	"keywords": [
 		"boxlang",
 		"ftp",
+		"sftp",
 		"file-transfer",
 		"client",
 		"upload",
@@ -33,10 +34,9 @@
 		}
 	],
 	"devDependencies": {
+		"commandbox-boxlang": "*",
 		"commandbox-cfformat": "*",
 		"commandbox-docbox": "*",
-		"commandbox-dotenv": "*",
-		"commandbox-cfconfig": "*",
 		"testbox": "*"
 	},
 	"ignore": [

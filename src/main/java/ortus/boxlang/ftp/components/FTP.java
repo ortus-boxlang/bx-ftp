@@ -21,9 +21,11 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Set;
 
+import ortus.boxlang.ftp.BaseFTPConnection;
 import ortus.boxlang.ftp.FTPConnection;
 import ortus.boxlang.ftp.FTPKeys;
 import ortus.boxlang.ftp.FTPResult;
+import ortus.boxlang.ftp.IFTPConnection;
 import ortus.boxlang.ftp.services.FTPService;
 import ortus.boxlang.runtime.components.Attribute;
 import ortus.boxlang.runtime.components.BoxComponent;
@@ -108,19 +110,23 @@ public class FTP extends Component {
 		    // The existing file to rename. Required for actions: renameFile
 		    new Attribute( FTPKeys.existing, "string" ),
 		    // failIfExists (true) - If a local file with same name exists, should it be overwritten with action = getFile. Default is true
-		    new Attribute( FTPKeys.failIfExists, "boolean", true )
+		    new Attribute( FTPKeys.failIfExists, "boolean", true ),
+		    // SFTP-specific attributes
+		    // secure (false) - FTP or SFTP if true
+		    new Attribute( FTPKeys.secure, "boolean", false ),
+		    // fingerprint - fingerprint of the server's public key for SFTP
+		    new Attribute( FTPKeys.fingerprint, "string" ),
+		    // key - absolute path to private key file for SFTP
+		    new Attribute( FTPKeys.key, "string" ),
+		    // passphrase - passphrase for private key for SFTP
+		    new Attribute( FTPKeys.passphrase, "string" )
 
 			// Pending Attributes, not sure if we need to do them.
 			// ASCIIExtensionList - Delimited list of file extensions that force ASCII transfer mode, if transferMode = "auto".
-			// proxyServer - name of the proxy server to use
 			// systemType - windows or unix
 			// transferMode - auto, ascii, binary
 			// retrycount (1) - Number of times to retry an operation
-			// passphrase - passphrase for private key
-			// key - absolute path to private key file
-			// fingerprint - fingerprint of the server's public key
-			// bufferSize - Buffer sie in bytes
-			// secure (false) - FTP or SFTP if true
+			// bufferSize - Buffer size in bytes
 		};
 		this.logger			= ftpService.getLogger();
 	}
@@ -169,7 +175,7 @@ public class FTP extends Component {
 	 *
 	 */
 	public BodyResult _invoke( IBoxContext context, IStruct attributes, ComponentBody body, IStruct executionState ) {
-		FTPConnection	ftpConnection	= findOrInitializeConnection( context, attributes );
+		IFTPConnection	ftpConnection	= findOrInitializeConnection( context, attributes );
 		FTPResult		ftpResult		= new FTPResult( ftpConnection );
 		String			action			= attributes.getAsString( Key.action ).toLowerCase();
 		Object			returnValue		= null;
@@ -201,15 +207,40 @@ public class FTP extends Component {
 					        "attributes", attributes
 					    )
 					);
-					ftpConnection.open(
-					    attributes.getAsString( Key.server ),
-					    IntegerCaster.cast( attributes.get( Key.port ) ),
-					    attributes.getAsString( Key.username ),
-					    attributes.getAsString( Key.password ),
-					    BooleanCaster.cast( attributes.get( FTPKeys.passive ) ),
-					    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) ),
-					    attributes.getAsString( Key.proxyServer )
-					);
+
+					// Determine the port to use based on whether this is secure (SFTP) or not
+					Integer connectionPort = attributes.get( Key.port ) != null
+					    ? IntegerCaster.cast( attributes.get( Key.port ) )
+					    : ( attributes.getAsBoolean( FTPKeys.secure )
+					        ? BaseFTPConnection.DEFAULT_SFTP_PORT
+					        : BaseFTPConnection.DEFAULT_PORT );
+
+					// Check if this is an SFTP connection with key-based authentication
+					if ( attributes.getAsBoolean( FTPKeys.secure ) && attributes.containsKey( FTPKeys.key ) ) {
+						// SFTP with key authentication
+						if ( ftpConnection instanceof ortus.boxlang.ftp.SFTPConnection sftpConn ) {
+							sftpConn.openWithKey(
+							    attributes.getAsString( Key.server ),
+							    connectionPort,
+							    attributes.getAsString( Key.username ),
+							    attributes.getAsString( FTPKeys.key ),
+							    attributes.getAsString( FTPKeys.passphrase ),
+							    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) ),
+							    attributes.getAsString( FTPKeys.fingerprint )
+							);
+						}
+					} else {
+						// Standard FTP or SFTP with password
+						ftpConnection.open(
+						    attributes.getAsString( Key.server ),
+						    connectionPort,
+						    attributes.getAsString( Key.username ),
+						    attributes.getAsString( Key.password ),
+						    BooleanCaster.cast( attributes.get( FTPKeys.passive ) ),
+						    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) ),
+						    attributes.getAsString( Key.proxyServer )
+						);
+					}
 					break;
 				case "close" :
 					runtime.announce(
@@ -227,7 +258,7 @@ public class FTP extends Component {
 					returnValue = ftpConnection.createDir( attributes.getAsString( FTPKeys._new ) );
 					break;
 				case "removedir" :
-					String targetDirectory = attributes.getAsString( FTPKeys.directory );
+					String targetDirectory = attributes.containsKey( FTPKeys.directory ) ? attributes.getAsString( FTPKeys.directory ) : null;
 					// Legacy compatibility
 					if ( attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
 						targetDirectory = attributes.getAsString( Key.item );
@@ -235,12 +266,18 @@ public class FTP extends Component {
 					returnValue = ftpConnection.removeDir( targetDirectory );
 					break;
 				case "listdir" :
+					// Only change directory if explicitly specified
+					if ( attributes.containsKey( Key.directory ) ) {
+						String listDir = attributes.getAsString( Key.directory );
+						if ( listDir != null && !listDir.isBlank() ) {
+							ftpConnection.changeDir( listDir );
+						}
+					}
 					Object files = ftpConnection
-					    .changeDir( attributes.getAsString( Key.directory ) )
 					    .listdir(
 					        attributes.getAsString( Key.returnType ).equalsIgnoreCase( "query" )
-					            ? FTPConnection.ReturnType.QUERY
-					            : FTPConnection.ReturnType.ARRAY
+					            ? IFTPConnection.ReturnType.QUERY
+					            : IFTPConnection.ReturnType.ARRAY
 					    );
 					returnValue = files;
 					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
@@ -260,13 +297,13 @@ public class FTP extends Component {
 					    BooleanCaster.cast( attributes.get( FTPKeys.failIfExists ) )
 					);
 					break;
-				case "renameFile", "renameDir" :
+				case "renamefile", "renamedir" :
 					returnValue = ftpConnection.rename(
 					    attributes.getAsString( FTPKeys.existing ),
 					    attributes.getAsString( FTPKeys._new )
 					);
 					break;
-				case "remove", "removeFile" :
+				case "remove", "removefile" :
 					String targetFile = attributes.getAsString( FTPKeys.remoteFile );
 					// Legacy compatibility
 					if ( attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
@@ -336,15 +373,16 @@ public class FTP extends Component {
 	}
 
 	/**
-	 * Find or initialize a connection to the FTP server
+	 * Find or initialize a connection to the FTP/SFTP server
 	 *
 	 * @param context    The context in which the Component is being invoked
 	 * @param attributes The attributes to the Component
 	 *
-	 * @return The FTP connection
+	 * @return The FTP/SFTP connection
 	 */
-	private FTPConnection findOrInitializeConnection( IBoxContext context, IStruct attributes ) {
-		String connectionName = attributes.getAsString( FTPKeys.connection ).trim();
-		return this.ftpService.getOrBuildConnection( Key.of( connectionName ) );
+	private IFTPConnection findOrInitializeConnection( IBoxContext context, IStruct attributes ) {
+		String	connectionName	= attributes.getAsString( FTPKeys.connection ).trim();
+		boolean	secure			= attributes.getAsBoolean( FTPKeys.secure );
+		return this.ftpService.getOrBuildConnection( Key.of( connectionName ), secure );
 	}
 }

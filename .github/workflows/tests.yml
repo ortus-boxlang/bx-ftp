@@ -35,7 +35,7 @@ jobs:
         #  experimental: true
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -66,7 +66,24 @@ jobs:
           printf "Listing FTP Files\n"
           ls -lR $hdir
 
-      - name: Test Module
+      - name: Setup SFTP Server
+        run: |
+          # Install OpenSSH server
+          sudo apt install -y openssh-server
+
+          # Configure SSH for password authentication
+          echo "PasswordAuthentication yes" | sudo tee -a /etc/ssh/sshd_config
+          echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config
+
+          # Restart SSH service
+          sudo systemctl restart ssh
+          sudo systemctl status ssh
+
+          # Verify test_user can authenticate
+          echo "SFTP Server is ready on port 22"
+          sudo service --status-all
+
+      - name: Test ${{ matrix.ftpMode }} FTP Mode
         run: |
           ./gradlew downloadBoxLang
           # this is done in order to build the module structure before testing
@@ -74,7 +91,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: tests-${{ matrix.os }}-${{ matrix.jdkVersion }}-${{ matrix.ftpMode }}
           path: |
@@ -106,7 +123,7 @@ jobs:
       issues: read
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: artifacts
 
