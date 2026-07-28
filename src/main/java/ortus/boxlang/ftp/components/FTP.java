@@ -57,6 +57,7 @@ public class FTP extends Component {
 	 * The actions that can be performed by this component
 	 */
 	public static final String[]	VALID_ACTIONS	= new String[] {
+	    // Currently implemented actions
 	    "changedir",
 	    "close",
 	    "createDir",
@@ -67,11 +68,25 @@ public class FTP extends Component {
 	    "listdir",
 	    "open",
 	    "putfile",
-	    "removeDir",
 	    "remove",
+	    "removeDir",
 	    "removeFile",
+	    "rename",
 	    "renameFile",
 	    "renameDir"
+
+		// MISSING ACTIONS — not yet implemented:
+		// "getCurrentUrl" - Get current working directory as URL (Lucee/Adobe)
+		// "exists" - Generic check if file OR directory exists, uses 'item' attribute
+		// (Lucee/Adobe)
+		// "quote" - Send raw FTP command to server, requires 'actionParam' attribute
+		// (Lucee/Adobe)
+		// "site" - Execute site-specific FTP command, requires 'actionParam' attribute
+		// (Adobe)
+		// "allo" - Allocate memory on server for large file operations (Adobe)
+		// "acct" - Send account information on systems that require it (Adobe)
+		// "copy" - Copy file on FTP server, uses 'existing' and 'new' attributes
+		// (Lucee/Adobe)
 	};
 
 	/**
@@ -82,7 +97,8 @@ public class FTP extends Component {
 		declaredAttributes	= new Attribute[] {
 		    // The action to perform
 		    new Attribute( Key.action, "string", Set.of( Validator.REQUIRED, Validator.valueOneOf( VALID_ACTIONS ) ) ),
-		    // Name of the variable to store the result, if not passed, the result will be stored in a variable named 'bxftp'
+		    // Name of the variable to store the result, if not passed, the result will be
+		    // stored in a variable named 'bxftp'
 		    new Attribute( Key.result, "string" ),
 		    // Connection Attributes
 		    new Attribute( FTPKeys.connection, "string", Set.of( Validator.REQUIRED ) ),
@@ -95,21 +111,27 @@ public class FTP extends Component {
 		    new Attribute( FTPKeys.timeout, "numeric", FTPConnection.DEFAULT_TIMEOUT.toSeconds() ),
 		    // this is the proxy server to use, it can include the port number as well
 		    new Attribute( Key.proxyServer, "string" ),
-		    // Directory on which to performan an operation. Required for actions: changeDir, createDir, listDir, existsDir
+		    // Directory on which to performan an operation. Required for actions:
+		    // changeDir, createDir, listDir, existsDir
 		    new Attribute( Key.directory, "string" ),
-		    // Query variable name when doing variable operations. Required for actions: listDir
+		    // Query variable name when doing variable operations. Required for actions:
+		    // listDir
 		    new Attribute( Key._name, "string" ),
 		    // The return type of the operation. Required for actions: listDir
 		    new Attribute( Key.returnType, "string", "query", Set.of( Validator.valueOneOf( "query", "array" ) ) ),
-		    // New name of the file/directory on the remote server. Required for actions: rename
+		    // New name of the file/directory on the remote server. Required for actions:
+		    // rename
 		    new Attribute( FTPKeys._new, "string" ),
-		    // The name of the file on the remote server. Required for actions: getFile, putFile, existsFile
+		    // The name of the file on the remote server. Required for actions: getFile,
+		    // putFile, existsFile
 		    new Attribute( FTPKeys.remoteFile, "string" ),
-		    // Name of the file on the local file system. Required for actions: getFile, putFile
+		    // Name of the file on the local file system. Required for actions: getFile,
+		    // putFile
 		    new Attribute( FTPKeys.localFile, "string" ),
 		    // The existing file to rename. Required for actions: renameFile
 		    new Attribute( FTPKeys.existing, "string" ),
-		    // failIfExists (true) - If a local file with same name exists, should it be overwritten with action = getFile. Default is true
+		    // failIfExists (true) - If a local file with same name exists, should it be
+		    // overwritten with action = getFile. Default is true
 		    new Attribute( FTPKeys.failIfExists, "boolean", true ),
 		    // SFTP-specific attributes
 		    // secure (false) - FTP or SFTP if true
@@ -121,12 +143,33 @@ public class FTP extends Component {
 		    // passphrase - passphrase for private key for SFTP
 		    new Attribute( FTPKeys.passphrase, "string" )
 
-			// Pending Attributes, not sure if we need to do them.
-			// ASCIIExtensionList - Delimited list of file extensions that force ASCII transfer mode, if transferMode = "auto".
-			// systemType - windows or unix
-			// transferMode - auto, ascii, binary
-			// retrycount (1) - Number of times to retry an operation
-			// bufferSize - Buffer size in bytes
+			// MISSING ATTRIBUTES — not yet declared:
+
+			// Connection-level attributes:
+			// retryCount (numeric, default: 1) - Number of retries until failure is
+			// reported (Lucee/Adobe)
+			// proxyPort (numeric, default: 80) - Port number on the proxy server
+			// (Lucee/Adobe)
+			// proxyUser (string) - Username when proxy requires authentication
+			// (Lucee/Adobe)
+			// proxyPassword (string) - Password when proxy requires authentication
+			// (Lucee/Adobe)
+			// bufferSize (numeric) - Buffer size in bytes for file transfers (Adobe)
+
+			// Transfer mode attributes:
+			// transferMode (string, default: "auto") - ASCII|binary|auto FTP transfer mode
+			// (Lucee/Adobe)
+			// ASCIIExtensionList (string) - Delimited list of file extensions that force
+			// ASCII transfer mode when transferMode=auto. Default:
+			// txt;htm;html;cfm;cfml;shtm;shtml;css;asp;asa (Lucee/Adobe)
+
+			// File listing attributes:
+			// systemType (string) - WINDOWS|UNIX — how to parse file list response (Adobe,
+			// CF11.0.3+)
+
+			// Action-specific attributes:
+			// actionParam (string) - Used only with actions: quote, site, acct. Specifies
+			// the command or account info (Lucee/Adobe)
 		};
 		this.logger			= ftpService.getLogger();
 	}
@@ -147,16 +190,28 @@ public class FTP extends Component {
 	 * <li>listDir</li>
 	 * <li>putFile</li>
 	 * <li>removeDir</li>
-	 * <li>removeFile</li>
-	 * <li>renameFile</li>
-	 * <li>renameDir</li>
+	 * <li>remove (also removeFile)</li>
+	 * <li>rename</li>
+	 * </ul>
+	 * <p>
+	 * Missing actions not yet implemented:
+	 * <ul>
+	 * <li>getCurrentUrl - Get current working directory as URL</li>
+	 * <li>exists - Generic check if file OR directory exists (uses 'item'
+	 * attribute)</li>
+	 * <li>quote - Send raw FTP command to server (requires 'actionParam')</li>
+	 * <li>site - Execute site-specific FTP command (requires 'actionParam')</li>
+	 * <li>allo - Allocate memory on server for large file operations</li>
+	 * <li>acct - Send account information on systems that require it</li>
+	 * <li>copy - Copy file on FTP server (uses 'existing' and 'new')</li>
 	 * </ul>
 	 *
 	 * <h2>Examples:</h2>
 	 *
 	 * <pre>
 	 * {@code
-	 * <bx:ftp action="open" server="ftp.server.com" port="21" username="user" password="password" connection="myConnection" >
+	 * <bx:ftp action="open" server="ftp.server.com" port="21" username=
+	"user" password="password" connection="myConnection" >
 	 * <bx:ftp action="changedir" directory="newDir" connection="myConnection">
 	 * <bx:ftp action="close" connection="myConnection>
 	 * }
@@ -192,9 +247,7 @@ public class FTP extends Component {
 		        "connection", ftpConnection,
 		        "action", action,
 		        "result", ftpResult,
-		        "attributes", attributes
-		    )
-		);
+		        "attributes", attributes ) );
 
 		try {
 			switch ( action.toLowerCase() ) {
@@ -204,9 +257,7 @@ public class FTP extends Component {
 					    FTPKeys.onFTPConnectionOpen,
 					    Struct.of(
 					        FTPKeys.connection, ftpConnection,
-					        "attributes", attributes
-					    )
-					);
+					        "attributes", attributes ) );
 
 					// Determine the port to use based on whether this is secure (SFTP) or not
 					Integer connectionPort = attributes.get( Key.port ) != null
@@ -226,8 +277,7 @@ public class FTP extends Component {
 							    attributes.getAsString( FTPKeys.key ),
 							    attributes.getAsString( FTPKeys.passphrase ),
 							    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) ),
-							    attributes.getAsString( FTPKeys.fingerprint )
-							);
+							    attributes.getAsString( FTPKeys.fingerprint ) );
 						}
 					} else {
 						// Standard FTP or SFTP with password
@@ -238,15 +288,13 @@ public class FTP extends Component {
 						    attributes.getAsString( Key.password ),
 						    BooleanCaster.cast( attributes.get( FTPKeys.passive ) ),
 						    Duration.ofSeconds( IntegerCaster.cast( attributes.get( FTPKeys.timeout ) ) ),
-						    attributes.getAsString( Key.proxyServer )
-						);
+						    attributes.getAsString( Key.proxyServer ) );
 					}
 					break;
 				case "close" :
 					runtime.announce(
 					    FTPKeys.onFTPConnectionClose,
-					    Struct.of( FTPKeys.connection, ftpConnection )
-					);
+					    Struct.of( FTPKeys.connection, ftpConnection ) );
 					ftpConnection.close();
 					break;
 
@@ -258,7 +306,9 @@ public class FTP extends Component {
 					returnValue = ftpConnection.createDir( attributes.getAsString( FTPKeys._new ) );
 					break;
 				case "removedir" :
-					String targetDirectory = attributes.containsKey( FTPKeys.directory ) ? attributes.getAsString( FTPKeys.directory ) : null;
+					String targetDirectory = attributes.containsKey( FTPKeys.directory )
+					    ? attributes.getAsString( FTPKeys.directory )
+					    : null;
 					// Legacy compatibility
 					if ( attributes.containsKey( Key.item ) && !attributes.getAsString( Key.item ).isBlank() ) {
 						targetDirectory = attributes.getAsString( Key.item );
@@ -277,8 +327,7 @@ public class FTP extends Component {
 					    .listdir(
 					        attributes.getAsString( Key.returnType ).equalsIgnoreCase( "query" )
 					            ? IFTPConnection.ReturnType.QUERY
-					            : IFTPConnection.ReturnType.ARRAY
-					    );
+					            : IFTPConnection.ReturnType.ARRAY );
 					returnValue = files;
 					context.getDefaultAssignmentScope().put( Key.of( attributes.get( Key._name ) ), files );
 					break;
@@ -294,14 +343,12 @@ public class FTP extends Component {
 					returnValue = ftpConnection.getFile(
 					    attributes.getAsString( FTPKeys.remoteFile ),
 					    attributes.getAsString( FTPKeys.localFile ),
-					    BooleanCaster.cast( attributes.get( FTPKeys.failIfExists ) )
-					);
+					    BooleanCaster.cast( attributes.get( FTPKeys.failIfExists ) ) );
 					break;
-				case "renamefile", "renamedir" :
+				case "renamefile", "renamedir", "rename" :
 					returnValue = ftpConnection.rename(
 					    attributes.getAsString( FTPKeys.existing ),
-					    attributes.getAsString( FTPKeys._new )
-					);
+					    attributes.getAsString( FTPKeys._new ) );
 					break;
 				case "remove", "removefile" :
 					String targetFile = attributes.getAsString( FTPKeys.remoteFile );
@@ -317,16 +364,14 @@ public class FTP extends Component {
 				case "putfile" :
 					returnValue = ftpConnection.putFile(
 					    attributes.getAsString( FTPKeys.localFile ),
-					    attributes.getAsString( FTPKeys.remoteFile )
-					);
+					    attributes.getAsString( FTPKeys.remoteFile ) );
 			}
 			;
 
 			// Set our connection variable in the context
 			context.getDefaultAssignmentScope().put(
 			    attributes.getAsString( FTPKeys.connection ),
-			    ftpConnection
-			);
+			    ftpConnection );
 
 			// Check if there is a return value to set in our ftp result
 			if ( returnValue != null ) {
@@ -347,9 +392,7 @@ public class FTP extends Component {
 			        "connection", ftpConnection,
 			        "action", action,
 			        "result", ftpResult,
-			        "attributes", attributes
-			    )
-			);
+			        "attributes", attributes ) );
 
 		} catch ( IOException e ) {
 			String message = String.format( "Error executing action [%s] -> [%s]", action, e.getMessage() );
@@ -362,9 +405,7 @@ public class FTP extends Component {
 			        "connection", ftpConnection,
 			        "action", action,
 			        "error", e,
-			        "attributes", attributes
-			    )
-			);
+			        "attributes", attributes ) );
 
 			throw new BoxIOException( message, e );
 		}
