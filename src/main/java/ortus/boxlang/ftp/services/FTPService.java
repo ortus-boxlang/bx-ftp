@@ -92,13 +92,13 @@ public class FTPService extends BaseService {
 
 	@Override
 	public void onShutdown( Boolean force ) {
-		getLogger().info( "+ FTP Service shutdown requested" );
+		getLogger().debug( "+ FTP Service shutdown requested" );
 		shutdownAllConnections();
 	}
 
 	@Override
 	public void onStartup() {
-		getLogger().info( "+ FTP Service started" );
+		getLogger().debug( "+ FTP Service started" );
 	}
 
 	/**
