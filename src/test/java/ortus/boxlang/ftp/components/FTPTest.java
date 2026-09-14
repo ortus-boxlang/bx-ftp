@@ -156,12 +156,13 @@ public class FTPTest extends BaseIntegrationTest {
 			assertThat( actualFileNames ).contains( expectedFile );
 		}
 
-		IStruct file = arr.stream()
+		IStruct	file	= arr.stream()
 		    .filter( row -> row.getAsString( Key._name ).equals( "file_a.txt" ) )
 		    .findFirst()
 		    .orElseThrow();
+		String	ftpUrl	= "ftp://localhost:" + variables.getAsString( Key.port );
 		assertThat( file.getAsString( Key.path ) ).isEqualTo( "/file_a.txt" );
-		assertThat( file.getAsString( FTPKeys.url ) ).isEqualTo( "ftp://localhost:2221/file_a.txt" );
+		assertThat( file.getAsString( FTPKeys.url ) ).isEqualTo( ftpUrl + "/file_a.txt" );
 
 		runtime.executeSource(
 		    """
@@ -178,7 +179,7 @@ public class FTPTest extends BaseIntegrationTest {
 		IStruct	nestedFile		= subFolderResult.stream().findFirst().orElseThrow();
 		assertThat( nestedFile.getAsString( Key.path ) ).isEqualTo( "/a_sub_folder/a-sub-file.md" );
 		assertThat( nestedFile.getAsString( FTPKeys.url ) )
-		    .isEqualTo( "ftp://localhost:2221/a_sub_folder/a-sub-file.md" );
+		    .isEqualTo( ftpUrl + "/a_sub_folder/a-sub-file.md" );
 	}
 
 	@DisplayName( "It can list files as array of structs" )

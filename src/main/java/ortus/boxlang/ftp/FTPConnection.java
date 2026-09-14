@@ -57,7 +57,17 @@ public class FTPConnection extends BaseFTPConnection {
 	/**
 	 * The FTPClient object used to communicate with the server.
 	 */
-	private FTPClient client = new FTPClient();
+	private FTPClient	client	= new FTPClient();
+
+	/**
+	 * The FTP server host used to open the connection.
+	 */
+	private String		server;
+
+	/**
+	 * The FTP server port used to open the connection.
+	 */
+	private Integer		port;
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -114,10 +124,12 @@ public class FTPConnection extends BaseFTPConnection {
 		Objects.requireNonNullElse( timeout, DEFAULT_TIMEOUT );
 
 		// Store for future reference
-		this.username = username;
+		this.username	= username;
+		this.server		= server;
+		this.port		= Objects.requireNonNullElse( port, DEFAULT_PORT );
 
 		// Connect to the server
-		this.client.connect( server, port );
+		this.client.connect( server, this.port );
 		this.client.setDataTimeout( timeout );
 
 		// Check if the proxy server is set
@@ -461,7 +473,7 @@ public class FTPConnection extends BaseFTPConnection {
 		FTPFile[]	files		= this.client.listFiles();
 		String		systemType	= this.client.getSystemType().toUpperCase();
 		String		path		= this.client.printWorkingDirectory();
-		String		url			= "ftp://" + this.client.getRemoteAddress().getHostName() + ":" + this.client.getRemotePort();
+		String		url			= "ftp://" + this.server + ":" + this.port;
 
 		if ( !FTPReply.isPositiveCompletion( this.client.getReplyCode() ) ) {
 			throw new BoxRuntimeException( "FTP error listing a directory: " + this.client.getReplyCode() );
