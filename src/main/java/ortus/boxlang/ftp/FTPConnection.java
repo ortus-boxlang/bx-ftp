@@ -460,15 +460,17 @@ public class FTPConnection extends BaseFTPConnection {
 	public Object listdir( ReturnType returntype ) throws IOException {
 		FTPFile[]	files		= this.client.listFiles();
 		String		systemType	= this.client.getSystemType().toUpperCase();
+		String		path		= this.client.printWorkingDirectory();
+		String		url			= "ftp://" + this.client.getRemoteAddress().getHostName() + ":" + this.client.getRemotePort();
 
 		if ( !FTPReply.isPositiveCompletion( this.client.getReplyCode() ) ) {
 			throw new BoxRuntimeException( "FTP error listing a directory: " + this.client.getReplyCode() );
 		}
 
 		if ( returntype == ReturnType.ARRAY ) {
-			return filesToArray( files, systemType );
+			return filesToArray( files, systemType, path, url );
 		}
-		return filesToQuery( files, systemType );
+		return filesToQuery( files, systemType, path, url );
 	}
 
 	/**
@@ -480,9 +482,23 @@ public class FTPConnection extends BaseFTPConnection {
 	 * @return A BoxLang Array of Structs containing the files
 	 */
 	public static Array filesToArray( FTPFile[] files, String systemType ) {
+		return filesToArray( files, systemType, "", "" );
+	}
+
+	/**
+	 * Convert FTP files to an array, including their directory path and URL.
+	 *
+	 * @param files      The array of FTP files to convert
+	 * @param systemType The system type of the FTP server
+	 * @param path       The current remote directory
+	 * @param url        The base URL of the FTP connection
+	 *
+	 * @return A BoxLang Array of Structs containing the files
+	 */
+	public static Array filesToArray( FTPFile[] files, String systemType, String path, String url ) {
 		return Arrays.asList( files )
 		    .stream()
-		    .map( file -> FTPFileToStruct( file, systemType ) )
+		    .map( file -> FTPFileToStruct( file, systemType, path, url ) )
 		    .collect( BLCollector.toArray() );
 	}
 
@@ -543,6 +559,20 @@ public class FTPConnection extends BaseFTPConnection {
 	 * @return A query object containing the files
 	 */
 	public static Query filesToQuery( FTPFile[] files, String systemType ) {
+		return filesToQuery( files, systemType, "", "" );
+	}
+
+	/**
+	 * Convert FTP files to a query, including their directory path and URL.
+	 *
+	 * @param files      The array of FTP files to convert
+	 * @param systemType The system type of the FTP server
+	 * @param path       The current remote directory
+	 * @param url        The base URL of the FTP connection
+	 *
+	 * @return A query object containing the files
+	 */
+	public static Query filesToQuery( FTPFile[] files, String systemType, String path, String url ) {
 		Query result = new Query();
 
 		result.addColumn( Key._name, QueryColumnType.VARCHAR );
@@ -558,7 +588,7 @@ public class FTPConnection extends BaseFTPConnection {
 
 		Arrays.asList( files )
 		    .stream()
-		    .forEach( file -> result.add( FTPFileToStruct( file, systemType ) ) );
+		    .forEach( file -> result.add( FTPFileToStruct( file, systemType, path, url ) ) );
 
 		return result;
 	}
@@ -574,6 +604,23 @@ public class FTPConnection extends BaseFTPConnection {
 	 * @throws IOException
 	 */
 	public static IStruct FTPFileToStruct( FTPFile file, String systemType ) {
+		return FTPFileToStruct( file, systemType, "", "" );
+	}
+
+	/**
+	 * Convert an FTP file to a struct with its directory path and URL.
+	 *
+	 * @param file       The FTP file to convert
+	 * @param systemType The system type of the FTP server
+	 * @param path       The current remote directory
+	 * @param url        The base URL of the FTP connection
+	 *
+	 * @return IStruct containing the FTP file information
+	 */
+	public static IStruct FTPFileToStruct( FTPFile file, String systemType, String path, String url ) {
+		String filePath = path == null || path.isBlank()
+		    ? file.getName()
+		    : "/".equals( path ) ? "/" + file.getName() : path + "/" + file.getName();
 		return Struct.of(
 		    Key._name, file.getName(),
 		    FTPKeys.isDirectory, file.isDirectory(),
@@ -583,8 +630,8 @@ public class FTPConnection extends BaseFTPConnection {
 		    // End Dumb name
 		    Key.size, file.getSize(),
 		    Key.mode, getMode( file, systemType ),
-		    Key.path, file.getName(),
-		    FTPKeys.url, file.getName(),
+		    Key.path, filePath,
+		    FTPKeys.url, url == null || url.isBlank() ? filePath : url + filePath,
 		    Key.type, getType( file ),
 		    FTPKeys.raw, file.getRawListing(),
 		    Key.attributes, file.getName(),

@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 
 import ortus.boxlang.compiler.parser.BoxSourceType;
 import ortus.boxlang.ftp.BaseIntegrationTest;
+import ortus.boxlang.ftp.FTPKeys;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.Array;
 import ortus.boxlang.runtime.types.IStruct;
@@ -154,6 +155,30 @@ public class FTPTest extends BaseIntegrationTest {
 		for ( String expectedFile : expectedFiles ) {
 			assertThat( actualFileNames ).contains( expectedFile );
 		}
+
+		IStruct file = arr.stream()
+		    .filter( row -> row.getAsString( Key._name ).equals( "file_a.txt" ) )
+		    .findFirst()
+		    .orElseThrow();
+		assertThat( file.getAsString( Key.path ) ).isEqualTo( "/file_a.txt" );
+		assertThat( file.getAsString( FTPKeys.url ) ).isEqualTo( "ftp://localhost:2221/file_a.txt" );
+
+		runtime.executeSource(
+			"""
+				<bx:ftp action="listdir"
+					connection="conn"
+					directory="/a_sub_folder"
+					name="subFolderResult"/>
+			""",
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+
+		Query subFolderResult = variables.getAsQuery( Key.of( "subFolderResult" ) );
+		IStruct nestedFile = subFolderResult.stream().findFirst().orElseThrow();
+		assertThat( nestedFile.getAsString( Key.path ) ).isEqualTo( "/a_sub_folder/a-sub-file.md" );
+		assertThat( nestedFile.getAsString( FTPKeys.url ) )
+		    .isEqualTo( "ftp://localhost:2221/a_sub_folder/a-sub-file.md" );
 	}
 
 	@DisplayName( "It can list files as array of structs" )
