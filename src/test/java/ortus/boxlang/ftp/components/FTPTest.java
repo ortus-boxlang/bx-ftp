@@ -164,18 +164,18 @@ public class FTPTest extends BaseIntegrationTest {
 		assertThat( file.getAsString( FTPKeys.url ) ).isEqualTo( "ftp://localhost:2221/file_a.txt" );
 
 		runtime.executeSource(
-			"""
-				<bx:ftp action="listdir"
-					connection="conn"
-					directory="/a_sub_folder"
-					name="subFolderResult"/>
-			""",
-			context,
-			BoxSourceType.BOXTEMPLATE
+		    """
+		    	<bx:ftp action="listdir"
+		    		connection="conn"
+		    		directory="/a_sub_folder"
+		    		name="subFolderResult"/>
+		    """,
+		    context,
+		    BoxSourceType.BOXTEMPLATE
 		);
 
-		Query subFolderResult = variables.getAsQuery( Key.of( "subFolderResult" ) );
-		IStruct nestedFile = subFolderResult.stream().findFirst().orElseThrow();
+		Query	subFolderResult	= variables.getAsQuery( Key.of( "subFolderResult" ) );
+		IStruct	nestedFile		= subFolderResult.stream().findFirst().orElseThrow();
 		assertThat( nestedFile.getAsString( Key.path ) ).isEqualTo( "/a_sub_folder/a-sub-file.md" );
 		assertThat( nestedFile.getAsString( FTPKeys.url ) )
 		    .isEqualTo( "ftp://localhost:2221/a_sub_folder/a-sub-file.md" );
