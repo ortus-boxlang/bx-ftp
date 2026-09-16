@@ -22,6 +22,8 @@ import java.time.Duration;
 
 import ortus.boxlang.runtime.logging.BoxLangLogger;
 import ortus.boxlang.runtime.scopes.Key;
+import ortus.boxlang.runtime.types.Query;
+import ortus.boxlang.runtime.types.QueryColumnType;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
 
 /**
@@ -70,6 +72,16 @@ public abstract class BaseFTPConnection implements IFTPConnection {
 	 * The username for the connection.
 	 */
 	protected String				username;
+
+	/**
+	 * The server address for the connection.
+	 */
+	protected String				server;
+
+	/**
+	 * The server port for the connection.
+	 */
+	protected Integer				port;
 
 	/**
 	 * The BoxLang logger to use
@@ -188,5 +200,57 @@ public abstract class BaseFTPConnection implements IFTPConnection {
 	protected void updateStatus( int code, String text ) {
 		this.statusCode	= code;
 		this.statusText	= text;
+	}
+
+	/**
+	 * Create a Query with the standard FTP/SFTP listing columns.
+	 *
+	 * @return A new Query with the standard column schema
+	 */
+	public static Query createQuery() {
+		Query result = new Query();
+
+		result.addColumn( Key._name, QueryColumnType.VARCHAR );
+		result.addColumn( FTPKeys.isDirectory, QueryColumnType.BIT );
+		result.addColumn( FTPKeys.lastModified, QueryColumnType.TIMESTAMP );
+		result.addColumn( Key.length, QueryColumnType.INTEGER );
+		result.addColumn( Key.mode, QueryColumnType.INTEGER );
+		result.addColumn( Key.path, QueryColumnType.VARCHAR );
+		result.addColumn( FTPKeys.url, QueryColumnType.VARCHAR );
+		result.addColumn( Key.type, QueryColumnType.VARCHAR );
+		result.addColumn( FTPKeys.raw, QueryColumnType.VARCHAR );
+		result.addColumn( Key.attributes, QueryColumnType.VARCHAR );
+
+		return result;
+	}
+
+	/**
+	 * Build the file path from the remote directory and file name.
+	 *
+	 * @param path The current remote directory (e.g. "/" or "/a_sub_folder")
+	 * @param name The file/directory name
+	 *
+	 * @return The full file path (e.g. "/file_a.txt" or "/a_sub_folder/a-sub-file.md")
+	 */
+	public static String buildFilePath( String path, String name ) {
+		if ( path == null || path.isBlank() ) {
+			return name;
+		}
+		return "/".equals( path ) ? "/" + name : path + "/" + name;
+	}
+
+	/**
+	 * Build the complete URL from the base URL and file path.
+	 *
+	 * @param url      The base URL of the connection (e.g. "ftp://localhost:21")
+	 * @param filePath The file path (e.g. "/file_a.txt")
+	 *
+	 * @return The complete URL (e.g. "ftp://localhost:21/file_a.txt")
+	 */
+	public static String buildUrl( String url, String filePath ) {
+		if ( url == null || url.isBlank() ) {
+			return filePath;
+		}
+		return url + filePath;
 	}
 }
