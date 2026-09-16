@@ -43,7 +43,6 @@ import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.Array;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
-import ortus.boxlang.runtime.types.QueryColumnType;
 import ortus.boxlang.runtime.types.Struct;
 import ortus.boxlang.runtime.types.exceptions.BoxIOException;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
@@ -78,16 +77,6 @@ public class SFTPConnection extends BaseFTPConnection {
 	 * The SFTP channel used to communicate with the server.
 	 */
 	private ChannelSftp	sftpChannel;
-
-	/**
-	 * The server address
-	 */
-	private String		server;
-
-	/**
-	 * The server port
-	 */
-	private Integer		port;
 
 	/**
 	 * The fingerprint for host key verification
@@ -528,6 +517,8 @@ public class SFTPConnection extends BaseFTPConnection {
 			@SuppressWarnings( "unchecked" )
 			Vector<LsEntry>	entries		= sftpChannel.ls( "." );
 			String			systemType	= "UNIX"; // SFTP servers are typically Unix-based
+			String			path		= sftpChannel.pwd();
+			String			url			= "sftp://" + this.server + ":" + this.port;
 
 			// Filter out . and ..
 			LsEntry[]		files		= entries.stream()
@@ -537,9 +528,9 @@ public class SFTPConnection extends BaseFTPConnection {
 			updateStatus( 226, "Directory listed successfully" );
 
 			if ( returntype == ReturnType.ARRAY ) {
-				return filesToArray( files, systemType );
+				return filesToArray( files, systemType, path, url );
 			}
-			return filesToQuery( files, systemType );
+			return filesToQuery( files, systemType, path, url );
 		} catch ( SftpException e ) {
 			this.logger.error( "Error listing directory: " + e.getMessage() );
 			updateStatus( e.id, e.getMessage() );
@@ -620,22 +611,25 @@ public class SFTPConnection extends BaseFTPConnection {
 	 * @return A query object containing the files
 	 */
 	public static Query filesToQuery( LsEntry[] files, String systemType ) {
-		Query result = new Query();
+		return filesToQuery( files, systemType, "", "" );
+	}
 
-		result.addColumn( Key._name, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.isDirectory, QueryColumnType.BIT );
-		result.addColumn( FTPKeys.lastModified, QueryColumnType.TIMESTAMP );
-		result.addColumn( Key.length, QueryColumnType.INTEGER );
-		result.addColumn( Key.mode, QueryColumnType.INTEGER );
-		result.addColumn( Key.path, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.url, QueryColumnType.VARCHAR );
-		result.addColumn( Key.type, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.raw, QueryColumnType.VARCHAR );
-		result.addColumn( Key.attributes, QueryColumnType.VARCHAR );
+	/**
+	 * Convert an array of SFTP LsEntry objects to a BoxLang Query with path and URL.
+	 *
+	 * @param files      The array of LsEntry objects to convert
+	 * @param systemType The system type of the SFTP server
+	 * @param path       The current remote directory
+	 * @param url        The base URL of the SFTP connection
+	 *
+	 * @return A query object containing the files
+	 */
+	public static Query filesToQuery( LsEntry[] files, String systemType, String path, String url ) {
+		Query result = BaseFTPConnection.createQuery();
 
 		Arrays.asList( files )
 		    .stream()
-		    .forEach( file -> result.add( sftpEntryToStruct( file, systemType ) ) );
+		    .forEach( file -> result.add( sftpEntryToStruct( file, systemType, path, url ) ) );
 
 		return result;
 	}
@@ -649,9 +643,23 @@ public class SFTPConnection extends BaseFTPConnection {
 	 * @return A BoxLang Array of Structs containing the files
 	 */
 	public static Array filesToArray( LsEntry[] files, String systemType ) {
+		return filesToArray( files, systemType, "", "" );
+	}
+
+	/**
+	 * Convert an array of SFTP LsEntry objects to an Array of Structs with path and URL.
+	 *
+	 * @param files      The array of LsEntry objects to convert
+	 * @param systemType The system type of the SFTP server
+	 * @param path       The current remote directory
+	 * @param url        The base URL of the SFTP connection
+	 *
+	 * @return A BoxLang Array of Structs containing the files
+	 */
+	public static Array filesToArray( LsEntry[] files, String systemType, String path, String url ) {
 		return Arrays.asList( files )
 		    .stream()
-		    .map( file -> sftpEntryToStruct( file, systemType ) )
+		    .map( file -> sftpEntryToStruct( file, systemType, path, url ) )
 		    .collect( BLCollector.toArray() );
 	}
 
@@ -664,7 +672,22 @@ public class SFTPConnection extends BaseFTPConnection {
 	 * @return IStruct containing file information
 	 */
 	public static IStruct sftpEntryToStruct( LsEntry entry, String systemType ) {
-		SftpATTRS attrs = entry.getAttrs();
+		return sftpEntryToStruct( entry, systemType, "", "" );
+	}
+
+	/**
+	 * Convert an SFTP LsEntry object to a struct with path and URL.
+	 *
+	 * @param entry      The LsEntry object to convert
+	 * @param systemType The system type of the SFTP server
+	 * @param path       The current remote directory
+	 * @param url        The base URL of the SFTP connection
+	 *
+	 * @return IStruct containing file information
+	 */
+	public static IStruct sftpEntryToStruct( LsEntry entry, String systemType, String path, String url ) {
+		SftpATTRS	attrs		= entry.getAttrs();
+		String		filePath	= BaseFTPConnection.buildFilePath( path, entry.getFilename() );
 
 		return Struct.of(
 		    Key._name, entry.getFilename(),
@@ -675,11 +698,11 @@ public class SFTPConnection extends BaseFTPConnection {
 		    // End Dumb name
 		    Key.size, attrs.getSize(),
 		    Key.mode, getMode( attrs, systemType ),
-		    Key.path, entry.getFilename(),
-		    FTPKeys.url, entry.getFilename(),
+		    Key.path, filePath,
+		    FTPKeys.url, BaseFTPConnection.buildUrl( url, filePath ),
 		    Key.type, attrs.isDir() ? "directory" : attrs.isLink() ? "symbolic link" : "file",
 		    FTPKeys.raw, entry.getLongname(),
-		    Key.attributes, entry.getFilename(),
+		    Key.attributes, "",
 		    FTPKeys.isReadable, ( attrs.getPermissions() & 0400 ) != 0, // Owner read permission
 		    FTPKeys.isWritable, ( attrs.getPermissions() & 0200 ) != 0, // Owner write permission
 		    FTPKeys.isExecutable, ( attrs.getPermissions() & 0100 ) != 0 // Owner execute permission

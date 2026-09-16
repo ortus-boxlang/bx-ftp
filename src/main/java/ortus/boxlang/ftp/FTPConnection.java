@@ -36,7 +36,6 @@ import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.Array;
 import ortus.boxlang.runtime.types.IStruct;
 import ortus.boxlang.runtime.types.Query;
-import ortus.boxlang.runtime.types.QueryColumnType;
 import ortus.boxlang.runtime.types.Struct;
 import ortus.boxlang.runtime.types.exceptions.BoxIOException;
 import ortus.boxlang.runtime.types.exceptions.BoxRuntimeException;
@@ -57,17 +56,7 @@ public class FTPConnection extends BaseFTPConnection {
 	/**
 	 * The FTPClient object used to communicate with the server.
 	 */
-	private FTPClient	client	= new FTPClient();
-
-	/**
-	 * The FTP server host used to open the connection.
-	 */
-	private String		server;
-
-	/**
-	 * The FTP server port used to open the connection.
-	 */
-	private Integer		port;
+	private FTPClient client = new FTPClient();
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -585,18 +574,7 @@ public class FTPConnection extends BaseFTPConnection {
 	 * @return A query object containing the files
 	 */
 	public static Query filesToQuery( FTPFile[] files, String systemType, String path, String url ) {
-		Query result = new Query();
-
-		result.addColumn( Key._name, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.isDirectory, QueryColumnType.BIT );
-		result.addColumn( FTPKeys.lastModified, QueryColumnType.TIMESTAMP );
-		result.addColumn( Key.length, QueryColumnType.INTEGER );
-		result.addColumn( Key.mode, QueryColumnType.INTEGER );
-		result.addColumn( Key.path, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.url, QueryColumnType.VARCHAR );
-		result.addColumn( Key.type, QueryColumnType.VARCHAR );
-		result.addColumn( FTPKeys.raw, QueryColumnType.VARCHAR );
-		result.addColumn( Key.attributes, QueryColumnType.VARCHAR );
+		Query result = BaseFTPConnection.createQuery();
 
 		Arrays.asList( files )
 		    .stream()
@@ -630,9 +608,7 @@ public class FTPConnection extends BaseFTPConnection {
 	 * @return IStruct containing the FTP file information
 	 */
 	public static IStruct FTPFileToStruct( FTPFile file, String systemType, String path, String url ) {
-		String filePath = path == null || path.isBlank()
-		    ? file.getName()
-		    : "/".equals( path ) ? "/" + file.getName() : path + "/" + file.getName();
+		String filePath = BaseFTPConnection.buildFilePath( path, file.getName() );
 		return Struct.of(
 		    Key._name, file.getName(),
 		    FTPKeys.isDirectory, file.isDirectory(),
@@ -643,7 +619,7 @@ public class FTPConnection extends BaseFTPConnection {
 		    Key.size, file.getSize(),
 		    Key.mode, getMode( file, systemType ),
 		    Key.path, filePath,
-		    FTPKeys.url, url == null || url.isBlank() ? filePath : url + filePath,
+		    FTPKeys.url, BaseFTPConnection.buildUrl( url, filePath ),
 		    Key.type, getType( file ),
 		    FTPKeys.raw, file.getRawListing(),
 		    Key.attributes, file.getName(),

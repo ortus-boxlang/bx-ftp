@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import ortus.boxlang.compiler.parser.BoxSourceType;
 import ortus.boxlang.ftp.BaseIntegrationTest;
+import ortus.boxlang.ftp.FTPKeys;
 import ortus.boxlang.runtime.scopes.Key;
 import ortus.boxlang.runtime.types.Array;
 import ortus.boxlang.runtime.types.IStruct;
@@ -125,6 +126,14 @@ public class SFTPTest extends BaseIntegrationTest {
 		for ( String expected : expectations ) {
 			assertThat( actualNames ).contains( expected );
 		}
+
+		IStruct	file	= arr.stream()
+		    .filter( row -> row.getAsString( Key._name ).equals( "file_a.txt" ) )
+		    .findFirst()
+		    .orElseThrow();
+		String	sftpUrl	= "sftp://localhost:" + variables.getAsString( Key.of( "sftpPort" ) );
+		assertThat( file.getAsString( Key.path ) ).isEqualTo( "/home/test_user/file_a.txt" );
+		assertThat( file.getAsString( FTPKeys.url ) ).isEqualTo( sftpUrl + "/home/test_user/file_a.txt" );
 	}
 
 	@DisplayName( "It can list files as array of structs on SFTP server" )
@@ -148,8 +157,8 @@ public class SFTPTest extends BaseIntegrationTest {
 		List<String>	expectations	= List.of( "a_sub_folder", "file_a.txt", "something.txt" );
 		List<String>	actualNames		= new ArrayList<>();
 
-		for ( Object file : arr ) {
-			IStruct targetFile = ( IStruct ) file;
+		for ( Object entry : arr ) {
+			IStruct targetFile = ( IStruct ) entry;
 			actualNames.add( targetFile.getAsString( Key._name ) );
 		}
 
@@ -157,6 +166,16 @@ public class SFTPTest extends BaseIntegrationTest {
 		for ( String expected : expectations ) {
 			assertThat( actualNames ).contains( expected );
 		}
+
+		// Verify path and URL are populated
+		IStruct	file	= arr.stream()
+		    .map( entry -> ( IStruct ) entry )
+		    .filter( row -> row.getAsString( Key._name ).equals( "file_a.txt" ) )
+		    .findFirst()
+		    .orElseThrow();
+		String	sftpUrl	= "sftp://localhost:" + variables.getAsString( Key.of( "sftpPort" ) );
+		assertThat( file.getAsString( Key.path ) ).isEqualTo( "/home/test_user/file_a.txt" );
+		assertThat( file.getAsString( FTPKeys.url ) ).isEqualTo( sftpUrl + "/home/test_user/file_a.txt" );
 	}
 
 	@DisplayName( "It can create a folder on SFTP server" )
@@ -570,5 +589,72 @@ public class SFTPTest extends BaseIntegrationTest {
 		    context,
 		    BoxSourceType.BOXTEMPLATE
 		);
+	}
+
+	@DisplayName( "It can check if a directory does not exist on SFTP server" )
+	@Test
+	public void testDirectoryDoesNotExist() {
+		// @formatter:off
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="existsDir" connection="sftpConn" directory="does_not_exist" result="myResult"/>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( ftpResult.getAsBoolean( Key.of( "Succeeded" ) ) ).isTrue();
+		assertThat( ftpResult.getAsBoolean( Key.of( "returnValue" ) ) ).isFalse();
+	}
+
+	@DisplayName( "It can ignore a closed or non-existed connection on SFTP when closing" )
+	@Test
+	public void testCloseConnectionIgnore() {
+		// @formatter:off
+		runtime.executeSource(
+			"""
+				<bx:ftp
+					action="close"
+					connection="bogus"
+					result="myResult"/>
+				<bx:script>
+					println( bogus );
+					isOpen = bogus.isConnected();
+				</bx:script>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct ftpResult = variables.getAsStruct( Key.of( "myResult" ) );
+		assertThat( variables.getAsBoolean( Key.of( "isOpen" ) ) ).isFalse();
+	}
+
+	@DisplayName( "It can change the working directory with relative path on SFTP server" )
+	@Test
+	public void testChangeWorkingDirectoryWithRelativePath() {
+		// @formatter:off
+		runtime.executeSource(
+			"""
+				<bx:ftp action="open" connection="sftpConn" username="#variables.username#" password="#variables.password#" server="#variables.server#" port="#variables.sftpPort#" secure="true" />
+				<bx:ftp action="changedir" connection="sftpConn" directory="a_sub_folder"/>
+				<bx:ftp action="changedir" connection="sftpConn" directory=".." />
+				<bx:ftp action="listdir" connection="sftpConn" name="result"/>
+				<bx:set sftpConn = sftpConn.getMetadata()>
+		    """,
+			context,
+			BoxSourceType.BOXTEMPLATE
+		);
+		// @formatter:on
+
+		IStruct sftpConn = variables.getAsStruct( Key.of( "sftpConn" ) );
+		assertThat( sftpConn.getAsString( Key.of( "workingDirectory" ) ) ).doesNotContain( "a_sub_folder" );
+
+		Query arr = ( Query ) variables.get( result );
+		assertThat( Arrays.asList( arr.getColumnData( Key._name ) ) ).contains( "a_sub_folder" );
 	}
 }
